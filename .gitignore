@@ -1,0 +1,34 @@
+# Python environment files
+backend/venv/
+backend/.venv/
+venv/
+.venv/
+ENV/
+env/
+*.pyc
+__pycache__/
+.pytest_cache/
+
+# Node package dependencies & builds
+frontend/node_modules/
+node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/out/
+
+# SQLite databases & test state persistence
+*.db
+*.db-journal
+*.sqlite3
+
+# Secret credentials (extremely important!)
+.env
+backend/.env
+frontend/.env
+*.local
+
+# System files & IDE directories
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
