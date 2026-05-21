@@ -59,7 +59,7 @@ class AIProvider:
         payload = {
             "model": "llama-3.3-70b-specdec",
             "messages": [
-                {"role": "system", "content": "You are a luxury cyberpunk marketing director. Create a campaign and return ONLY a valid JSON object matching this structure: {\"campaign_name\": \"\", \"tagline\": \"\", \"description\": \"\", \"sensory_notes\": \"\", \"visual_prompt\": \"\"}"},
+                {"role": "system", "content": "You are a luxury cyberpunk marketing director. Create a campaign and return ONLY a valid JSON object matching this structure: {\"campaign_name\": \"\", \"tagline\": \"\", \"description\": \"\", \"sensory_notes\": \"\", \"visual_prompt\": \"\"}. Do not include any emojis, stickers, or special icons in any of the fields."},
                 {"role": "user", "content": f"Theme: {theme}\nParticipant input: {prompt}"}
             ],
             "response_format": {"type": "json_object"},
@@ -84,7 +84,7 @@ class AIProvider:
         payload = {
             "model": "gpt-4o-mini",
             "messages": [
-                {"role": "system", "content": "You are a creative advertising genius. Create a campaign. Return ONLY a valid JSON object: {\"campaign_name\": \"\", \"tagline\": \"\", \"description\": \"\", \"sensory_notes\": \"\", \"visual_prompt\": \"\"}"},
+                {"role": "system", "content": "You are a creative advertising genius. Create a campaign. Return ONLY a valid JSON object: {\"campaign_name\": \"\", \"tagline\": \"\", \"description\": \"\", \"sensory_notes\": \"\", \"visual_prompt\": \"\"}. Do not include any emojis, stickers, or special icons in any of the fields."},
                 {"role": "user", "content": f"Theme: {theme}\nParticipant input: {prompt}"}
             ],
             "response_format": {"type": "json_object"},

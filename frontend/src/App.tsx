@@ -87,7 +87,7 @@ function App() {
       {/* Footer Details */}
       <footer className="w-full bg-[#122326] py-2 border-t border-[#2a3c42] relative z-30 shrink-0 text-center">
         <span className="text-[10px] text-[#8797a1] font-bold uppercase tracking-widest">
-          Poiro Creative Battle Room — Reddit Dark Edition
+          Poiro Creative Battle Room — Dark Edition
         </span>
       </footer>
 

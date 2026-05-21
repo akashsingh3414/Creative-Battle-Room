@@ -2,7 +2,7 @@
 
 Welcome to the **Poiro AI Creative Battle Room**! This is a stateful, real-time multiplayer creative battle arena where users compete in AI-powered copywriting and product design challenges. One host launches the battle rounds while participants submit prompts, which are processed asynchronously through a dedicated background task queue and generated using live LLM APIs.
 
-The system is designed with a professional, enterprise-grade **Clean Architecture** (featuring domain-specific models, schemas, and class-based services) on the backend and a premium, responsive **React + Vite + TypeScript** dashboard styled with a high-contrast **Reddit-style Dark Theme** on the frontend.
+The system is designed with a professional, enterprise-grade **Clean Architecture** (featuring domain-specific models, schemas, and class-based services) on the backend and a premium, responsive **React + Vite + TypeScript** dashboard styled with a high-contrast **Modern Dark Theme** on the frontend.
 
 ---
 

@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 @theme {
-  --color-cyber-purple: #ff4500; /* Shift accents to iconic Reddit Orange-Red */
-  --color-cyber-cyan: #24a0ed;   /* Soothing Reddit Blue */
+  --color-cyber-purple: #ff4500; /* Shift accents to iconic Orange-Red */
+  --color-cyber-cyan: #24a0ed;   /* Soothing Blue */
   --color-cyber-pink: #ff585b;
-  --color-bg-dark: #0b1416;      /* Modern Reddit dark background */
+  --color-bg-dark: #0b1416;      /* Modern dark background */
   --color-bg-card: #122326;      /* Slightly lighter slate-teal card body */
 }
 
@@ -30,7 +30,7 @@ body {
   flex-direction: column;
 }
 
-/* Glassmorphism custom classes - Reddit Dark Quartz */
+/* Glassmorphism custom classes - Dark Quartz */
 .glass-panel {
   background: #122326;
   border: 1px solid #2a3c42; /* Clean, visible flat border */

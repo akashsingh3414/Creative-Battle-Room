@@ -359,7 +359,7 @@ export const ActiveBattle: React.FC = () => {
               </h3>
               <p className="text-sm text-[#8797a1] mt-3.5 leading-relaxed font-semibold">
                 {room.active_round?.status === 'completed'
-                  ? 'All scores for the previous round are committed in SQLite. Host can initiate a brand new round.'
+                  ? 'All scores for the previous round are successfully saved. Host can initiate a brand new round.'
                   : 'Welcome to the creative battle lobby! The arena director is currently compiling the sensory campaign goals.'}
               </p>
 
@@ -525,7 +525,7 @@ export const ActiveBattle: React.FC = () => {
                           </div>
                           <h4 className="text-base font-extrabold text-white">Lobby Prompt Injected!</h4>
                           <p className="text-sm text-[#8797a1] leading-relaxed max-w-md mx-auto font-semibold">
-                            Your prompt: <em className="text-[#ff4500] font-bold">"{currentParticipantSubmission?.user_prompt}"</em> is safely written to SQLite. Watch the AI queue matrix below!
+                            Your prompt: <em className="text-[#ff4500] font-bold">"{currentParticipantSubmission?.user_prompt}"</em> is successfully submitted! Watch the AI processing status below!
                           </p>
 
                           <div className="pt-2 flex justify-center gap-2.5 items-center">
