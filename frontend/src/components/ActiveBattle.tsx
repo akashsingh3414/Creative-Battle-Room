@@ -15,7 +15,6 @@ export const ActiveBattle: React.FC = () => {
   const [customTheme, setCustomTheme] = useState('');
   const [promptInput, setPromptInput] = useState('');
   const [scores, setScores] = useState<Record<string, number>>({});
-  const [ranks, setRanks] = useState<Record<string, number>>({});
   const [eventFeed, setEventFeed] = useState<string[]>([]);
   const consoleBottomRef = useRef<HTMLDivElement>(null);
 
@@ -87,16 +86,11 @@ export const ActiveBattle: React.FC = () => {
     setScores((prev) => ({ ...prev, [submissionId]: val }));
   };
 
-  const handleRankChange = (submissionId: string, val: number) => {
-    setRanks((prev) => ({ ...prev, [submissionId]: val }));
-  };
-
   const handlePublishScore = (sub: Submission) => {
     const scoreVal = scores[sub.id] ?? sub.score ?? 50;
-    const rankVal = ranks[sub.id] ?? sub.rank ?? null;
-    scoreSubmission(sub.id, scoreVal, rankVal, sub.status);
+    scoreSubmission(sub.id, scoreVal, sub.rank, sub.status);
     setToast(`Published score of ${scoreVal} to ${sub.participant.username}'s prompt!`, 'success');
-    setEventFeed((prev) => [...prev, `[host] Ranked ${sub.participant.username} with ${scoreVal} points.`]);
+    setEventFeed((prev) => [...prev, `[host] Graded ${sub.participant.username} with ${scoreVal} points.`]);
   };
 
   const handleEliminateToggle = (sub: Submission) => {
@@ -572,7 +566,6 @@ export const ActiveBattle: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {room.active_round.submissions.map((sub) => {
                 const subScore = scores[sub.id] ?? sub.score ?? 50;
-                const subRank = ranks[sub.id] ?? sub.rank ?? 1;
 
                 return (
                   <div
@@ -741,38 +734,20 @@ export const ActiveBattle: React.FC = () => {
                                   className="w-full h-1.5 bg-[#1a2a2d] border border-[#2a3c42] rounded-lg appearance-none cursor-pointer accent-[#ff4500]"
                                 />
 
-                                <div className="flex gap-2 items-center">
-                                  {/* Rank selectors */}
-                                  <div className="flex-1 flex gap-1 bg-[#1a2a2d] border border-[#2a3c42] p-1 rounded-lg">
-                                    {[1, 2, 3].map((r) => (
-                                      <button
-                                        key={r}
-                                        type="button"
-                                        onClick={() => handleRankChange(sub.id, r)}
-                                        className={`flex-1 py-1 rounded text-xs font-bold uppercase tracking-wider transition-all focus:outline-none cursor-pointer ${
-                                          subRank === r
-                                            ? 'bg-[#ff4500] text-white shadow-sm shadow-[#ff4500]/20'
-                                            : 'text-[#8797a1] hover:text-white'
-                                        }`}
-                                      >
-                                        Rank {r}
-                                      </button>
-                                    ))}
-                                  </div>
-
+                                <div className="flex gap-2 items-center w-full">
                                   <button
                                     onClick={() => handlePublishScore(sub)}
-                                    className="px-3.5 py-2.5 bg-[#ff4500] hover:bg-[#ff581a] text-white font-bold uppercase text-[10px] rounded-lg tracking-wider focus:outline-none shadow-md shadow-[#ff4500]/25 shrink-0 cursor-pointer active:scale-[0.98]"
+                                    className="flex-1 py-2.5 bg-[#ff4500] hover:bg-[#ff581a] text-white font-bold uppercase text-xs tracking-wider rounded-lg focus:outline-none shadow-md shadow-[#ff4500]/25 cursor-pointer active:scale-[0.98] transition-all"
                                   >
-                                    Commit
+                                    Commit Score
                                   </button>
 
                                   <button
                                     onClick={() => handleEliminateToggle(sub)}
-                                    title="Eliminate Contestant"
-                                    className="p-2 border border-[#2a3c42] hover:border-[#ff585b] hover:bg-[#ff585b]/10 text-[#8797a1] hover:text-[#ff585b] rounded-lg transition-all focus:outline-none cursor-pointer shrink-0"
+                                    title={sub.status === 'eliminated' ? "Reinstate Contestant" : "Eliminate Contestant"}
+                                    className="p-2.5 border border-[#2a3c42] hover:border-[#ff585b] hover:bg-[#ff585b]/10 text-[#8797a1] hover:text-[#ff585b] rounded-lg transition-all focus:outline-none cursor-pointer shrink-0"
                                   >
-                                    <Skull className="w-4 h-4" />
+                                    <Skull className="w-4.5 h-4.5" />
                                   </button>
                                 </div>
                               </div>
