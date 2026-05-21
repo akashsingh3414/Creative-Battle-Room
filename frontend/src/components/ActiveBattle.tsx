@@ -3,13 +3,13 @@ import { useBattleStore, type Submission } from '../store/useBattleStore';
 import { JobStatusBadge } from './JobStatusBadge';
 import {
   Users, Trophy, Skull, Play, ShieldAlert, Check,
-  Send, Copy, ArrowLeft, Terminal, AlertTriangle, Flame, Sparkles, Award
+  Send, Copy, ArrowLeft, Terminal, AlertTriangle, Flame, Sparkles, Award, Lock, Unlock
 } from 'lucide-react';
 
 export const ActiveBattle: React.FC = () => {
   const {
     room, wsConnected, disconnectRoom, setToast,
-    startRound, submitPrompt, lockSubmissions, scoreSubmission, completeRound, endBattle
+    startRound, submitPrompt, lockSubmissions, unlockSubmissions, scoreSubmission, completeRound, endBattle
   } = useBattleStore();
 
   const [customTheme, setCustomTheme] = useState('');
@@ -447,7 +447,7 @@ export const ActiveBattle: React.FC = () => {
                     </span>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2 justify-center sm:justify-end">
                     {room.active_round.status === 'accepting_submissions' ? (
                       <button
                         onClick={lockSubmissions}
@@ -457,13 +457,22 @@ export const ActiveBattle: React.FC = () => {
                         Lock Entries & Grade
                       </button>
                     ) : (
-                      <button
-                        onClick={completeRound}
-                        className="flex items-center gap-1.5 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase text-xs tracking-wider rounded-xl transition-all shadow-md shadow-emerald-500/20 focus:outline-none cursor-pointer active:scale-[0.98]"
-                      >
-                        <Check className="w-4.5 h-4.5" />
-                        Commit Scores & Next
-                      </button>
+                      <>
+                        <button
+                          onClick={unlockSubmissions}
+                          className="flex items-center gap-1.5 px-4 py-2.5 bg-zinc-700 hover:bg-zinc-650 text-white font-bold uppercase text-xs tracking-wider rounded-xl transition-all focus:outline-none cursor-pointer active:scale-[0.98] border border-zinc-600 hover:border-zinc-550"
+                        >
+                          <Unlock className="w-4.5 h-4.5" />
+                          Unlock Entries
+                        </button>
+                        <button
+                          onClick={completeRound}
+                          className="flex items-center gap-1.5 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase text-xs tracking-wider rounded-xl transition-all shadow-md shadow-emerald-500/20 focus:outline-none cursor-pointer active:scale-[0.98]"
+                        >
+                          <Check className="w-4.5 h-4.5" />
+                          Commit Scores & Next
+                        </button>
+                      </>
                     )}
 
                     <button

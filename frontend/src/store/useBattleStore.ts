@@ -88,6 +88,7 @@ interface BattleStore {
   startRound: (theme: string) => void;
   submitPrompt: (prompt: string) => void;
   lockSubmissions: () => void;
+  unlockSubmissions: () => void;
   scoreSubmission: (submission_id: string, score: number, rank: number | null, status: 'active' | 'eliminated') => void;
   completeRound: () => void;
   endBattle: () => void;
@@ -517,11 +518,28 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
           get().setToast('The round evaluation is complete! Scoring is finalized.', 'success');
           break;
 
+        case 'ROUND_UNLOCKED':
+          set((state) => {
+            if (!state.room.active_round) return {};
+            return {
+              room: {
+                ...state.room,
+                active_round: {
+                  ...state.room.active_round,
+                  status: 'accepting_submissions'
+                }
+              }
+            };
+          });
+          get().setToast('Submissions have been unlocked! Contestants can submit prompts again.', 'info');
+          break;
+
         case 'BATTLE_COMPLETED': {
           set((state) => ({
             room: {
               ...state.room,
-              room_status: 'completed'
+              room_status: 'completed',
+              active_round: payload.active_round || state.room.active_round
             }
           }));
           get().setToast('The Creative Battle Room session has finished! Long live the champions!', 'success');
@@ -596,6 +614,16 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
     if (ws && wsConnected) {
       ws.send(JSON.stringify({
         action: 'EVALUATE_ROUND',
+        payload: {}
+      }));
+    }
+  },
+
+  unlockSubmissions: () => {
+    const { ws, wsConnected } = get();
+    if (ws && wsConnected) {
+      ws.send(JSON.stringify({
+        action: 'UNLOCK_ROUND',
         payload: {}
       }));
     }

@@ -71,10 +71,35 @@ class ConnectionManager:
 
     async def broadcast(self, room_id: str, message: dict):
         if room_id in self.active_connections:
-            # Broadcast to all clients in the room safely
+            event_type = message.get("event_type")
+            payload = message.get("payload", {})
+            
+            # Events that contain submission data and should be restricted to Host and Owner
+            sensitive_events = ["SUBMISSION_SUBMITTED", "JOB_STATUS_UPDATED", "SUBMISSION_COMPLETED", "SUBMISSION_SCORED"]
+            
             for connection in list(self.active_connections[room_id]):
                 try:
-                    await connection.send_json(message)
+                    socket_room, socket_user_id = self.socket_info.get(connection, (None, None))
+                    if not socket_room or not socket_user_id:
+                        continue
+                    
+                    user_info = self.room_users.get(socket_room, {}).get(socket_user_id, {})
+                    is_host = user_info.get("role") == "host"
+                    
+                    if event_type in sensitive_events:
+                        # Extract participant_id
+                        participant_id = None
+                        if event_type == "SUBMISSION_SUBMITTED":
+                            participant_id = payload.get("participant", {}).get("id")
+                        elif event_type in ["JOB_STATUS_UPDATED", "SUBMISSION_COMPLETED", "SUBMISSION_SCORED"]:
+                            participant_id = payload.get("participant_id")
+                        
+                        # Only send if host or owner
+                        if is_host or socket_user_id == participant_id:
+                            await connection.send_json(message)
+                    else:
+                        # Non-sensitive events (USER_JOINED, USER_LEFT, ROUND_STARTED, etc.) go to everyone
+                        await connection.send_json(message)
                 except Exception:
                     # connection might be dead, discard silently
                     pass
@@ -163,32 +188,33 @@ async def websocket_endpoint(
             # Serialize submissions in the active round
             submissions_list = []
             for sub in active_round.submissions:
-                campaign_data = None
-                if sub.generated_content:
-                    try:
-                        campaign_data = json.loads(sub.generated_content)
-                    except Exception:
-                        campaign_data = sub.generated_content
+                if user.id == room.host_id or room.status == "completed" or sub.participant_id == user.id:
+                    campaign_data = None
+                    if sub.generated_content:
+                        try:
+                            campaign_data = json.loads(sub.generated_content)
+                        except Exception:
+                            campaign_data = sub.generated_content
 
-                submissions_list.append({
-                    "id": sub.id,
-                    "participant": {
-                        "id": sub.participant.id,
-                        "username": sub.participant.username,
-                        "avatar_seed": sub.participant.avatar_seed
-                    },
-                    "user_prompt": sub.user_prompt,
-                    "generated_content": campaign_data,
-                    "image_url": sub.image_url,
-                    "score": sub.score,
-                    "rank": sub.rank,
-                    "status": sub.status,
-                    "job": {
-                        "id": sub.job.id if sub.job else None,
-                        "status": sub.job.status if sub.job else None,
-                        "error_message": sub.job.error_message if sub.job else None
-                    }
-                })
+                    submissions_list.append({
+                        "id": sub.id,
+                        "participant": {
+                            "id": sub.participant.id,
+                            "username": sub.participant.username,
+                            "avatar_seed": sub.participant.avatar_seed
+                        },
+                        "user_prompt": sub.user_prompt,
+                        "generated_content": campaign_data,
+                        "image_url": sub.image_url,
+                        "score": sub.score,
+                        "rank": sub.rank,
+                        "status": sub.status,
+                        "job": {
+                            "id": sub.job.id if sub.job else None,
+                            "status": sub.job.status if sub.job else None,
+                            "error_message": sub.job.error_message if sub.job else None
+                        }
+                    })
 
             initial_state["active_round"] = {
                 "id": active_round.id,
@@ -355,6 +381,7 @@ async def websocket_endpoint(
                         "event_type": "SUBMISSION_SCORED",
                         "payload": {
                             "submission_id": scored_sub.id,
+                            "participant_id": scored_sub.participant_id,
                             "score": scored_sub.score,
                             "rank": scored_sub.rank,
                             "status": scored_sub.status
@@ -383,20 +410,96 @@ async def websocket_endpoint(
                     }
                 })
 
+            # G. UNLOCK_ROUND (Host only)
+            elif action == "UNLOCK_ROUND":
+                if user.id != room.host_id:
+                    await websocket.send_json({"event_type": "ERROR", "payload": {"message": "Permission denied: Only the room host can unlock submissions."}})
+                    continue
+
+                active_round = round_service.get_active(room_code)
+                if not active_round or active_round.status != "evaluating":
+                    await websocket.send_json({"event_type": "ERROR", "payload": {"message": "No locked round is currently open for unlocking."}})
+                    continue
+
+                active_round.status = "accepting_submissions"
+                db.commit()
+
+                await manager.broadcast(room_code, {
+                    "event_type": "ROUND_UNLOCKED",
+                    "payload": {
+                        "round_id": active_round.id,
+                        "status": "accepting_submissions"
+                    }
+                })
+
             # F. REVEAL_WINNER / END_BATTLE (Host only)
             elif action == "END_BATTLE":
                 if user.id != room.host_id:
                     await websocket.send_json({"event_type": "ERROR", "payload": {"message": "Permission denied: Only the host can end the battle."}})
                     continue
 
+                # Auto-allot ranks for the active round's active submissions based on scores
+                active_round = round_service.get_active(room_code)
+                if active_round:
+                    # Filter out eliminated ones, rank remaining active ones based on score desc
+                    subs = [s for s in active_round.submissions if s.status == "active"]
+                    subs.sort(key=lambda s: s.score if s.score is not None else 0.0, reverse=True)
+                    for index, sub in enumerate(subs):
+                        sub.rank = index + 1
+                    
+                    # Also set round to completed!
+                    active_round.status = "completed"
+
                 room.status = "completed"
                 db.commit()
+
+                # Serialize the complete active round with all submissions for everyone
+                # (since results are now published!)
+                round_data = None
+                if active_round:
+                    submissions_list = []
+                    for sub in active_round.submissions:
+                        campaign_data = None
+                        if sub.generated_content:
+                            try:
+                                campaign_data = json.loads(sub.generated_content)
+                            except Exception:
+                                campaign_data = sub.generated_content
+
+                        submissions_list.append({
+                            "id": sub.id,
+                            "participant": {
+                                "id": sub.participant.id,
+                                "username": sub.participant.username,
+                                "avatar_seed": sub.participant.avatar_seed
+                            },
+                            "user_prompt": sub.user_prompt,
+                            "generated_content": campaign_data,
+                            "image_url": sub.image_url,
+                            "score": sub.score,
+                            "rank": sub.rank,
+                            "status": sub.status,
+                            "job": {
+                                "id": sub.job.id if sub.job else None,
+                                "status": sub.job.status if sub.job else None,
+                                "error_message": sub.job.error_message if sub.job else None
+                            }
+                        })
+                    
+                    round_data = {
+                        "id": active_round.id,
+                        "round_number": active_round.round_number,
+                        "prompt_theme": active_round.prompt_theme,
+                        "status": active_round.status,
+                        "submissions": submissions_list
+                    }
 
                 await manager.broadcast(room_code, {
                     "event_type": "BATTLE_COMPLETED",
                     "payload": {
                         "room_id": room_code,
-                        "status": "completed"
+                        "status": "completed",
+                        "active_round": round_data
                     }
                 })
 

@@ -11,10 +11,8 @@ export const CreateJoinRoom: React.FC = () => {
   const { user, createRoom, connectRoom, logout, setToast, publicRooms, fetchPublicRooms, recentRooms, fetchUserHistory } = useBattleStore();
 
   useEffect(() => {
-    fetchPublicRooms();
     fetchUserHistory();
     const interval = setInterval(() => {
-      fetchPublicRooms();
       fetchUserHistory();
     }, 3000);
     return () => clearInterval(interval);
@@ -308,49 +306,7 @@ export const CreateJoinRoom: React.FC = () => {
           );
         })()}
 
-        {/* Public Active Arenas Listing */}
-        {publicRooms && publicRooms.length > 0 && (
-          <div className="glass-panel p-6 rounded-2xl space-y-4">
-            <div className="flex items-center gap-2 text-[#ff4500]">
-              <Sparkles className="w-4.5 h-4.5" />
-              <h4 className="text-sm font-extrabold uppercase tracking-widest text-white">Live Public Battle Arenas</h4>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {publicRooms.map((r: any) => (
-                <div 
-                  key={r.id}
-                  className="p-4 bg-[#1a2a2d] border border-[#2a3c42] hover:border-[#ff4500]/40 rounded-xl flex items-center justify-between gap-4 transition-all group hover:bg-[#203236]"
-                >
-                  <div className="truncate flex-1">
-                    <span className="block text-sm font-extrabold text-white truncate leading-normal">
-                      {r.name}
-                    </span>
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#0b1416] text-[#8797a1] border border-[#2a3c42]">
-                        Code: {r.id}
-                      </span>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#ff4500]/10 text-[#ff4500] border border-[#ff4500]/20">
-                        Host: {r.host?.username || 'Director'}
-                      </span>
-                    </div>
-                  </div>
 
-                  <button
-                    onClick={() => {
-                      connectRoom(r.id);
-                      setToast(`Infiltrating Arena lobby: ${r.id}...`, 'success');
-                    }}
-                    disabled={loading}
-                    className="px-4 py-2 bg-[#ff4500] hover:bg-[#ff581a] text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-all focus:outline-none shrink-0 cursor-pointer"
-                  >
-                    Join Arena
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
