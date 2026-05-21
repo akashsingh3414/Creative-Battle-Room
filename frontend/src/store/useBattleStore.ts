@@ -49,6 +49,7 @@ export interface RoomState {
   host: User | null;
   user_role: 'host' | 'participant' | 'spectator' | null;
   active_round: ActiveRound | null;
+  users: User[];
 }
 
 interface BattleStore {
@@ -64,6 +65,7 @@ interface BattleStore {
   wsConnected: boolean;
   wsError: string | null;
   toastMessage: { text: string; type: 'success' | 'error' | 'info' } | null;
+  publicRooms: any[];
 
   // Actions
   login: (email: string, password: string) => Promise<boolean>;
@@ -76,6 +78,8 @@ interface BattleStore {
   // Room REST Actions
   createRoom: (name: string) => Promise<string | null>;
   getRoomDetails: (room_id: string) => Promise<boolean>;
+  fetchPublicRooms: () => Promise<void>;
+  syncRecentRoomsStatus: () => Promise<void>;
   
   // WebSocket Live Actions
   connectRoom: (room_code: string) => void;
@@ -105,12 +109,14 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
     room_status: null,
     host: null,
     user_role: null,
-    active_round: null
+    active_round: null,
+    users: []
   },
   ws: null,
   wsConnected: false,
   wsError: null,
   toastMessage: null,
+  publicRooms: [],
 
   clearToast: () => set({ toastMessage: null }),
   setToast: (text, type = 'info') => set({ toastMessage: { text, type } }),
@@ -176,7 +182,8 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
         room_status: null,
         host: null,
         user_role: null,
-        active_round: null
+        active_round: null,
+        users: []
       }
     });
     get().setToast('Logged out cleanly.', 'info');
@@ -251,6 +258,65 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
     }
   },
 
+  fetchPublicRooms: async () => {
+    const { token } = get();
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/rooms`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        set({ publicRooms: data });
+      }
+    } catch (e) {
+      console.error('Failed to fetch public rooms:', e);
+    }
+  },
+
+  syncRecentRoomsStatus: async () => {
+    const { token, user } = get();
+    if (!token || !user) return;
+
+    const recentListKey = `poiro_recent_rooms_${user.id}`;
+    const rawRecent = localStorage.getItem(recentListKey);
+    if (!rawRecent) return;
+
+    try {
+      let recentRooms = JSON.parse(rawRecent);
+      let updated = false;
+
+      for (let i = 0; i < recentRooms.length; i++) {
+        const r = recentRooms[i];
+        if (!r.completed) {
+          try {
+            const res = await fetch(`${API_BASE}/api/rooms/${r.code}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+              const data = await res.json();
+              if (data.status === 'completed') {
+                recentRooms[i].completed = true;
+                updated = true;
+              }
+            }
+          } catch (err) {
+            console.error('Failed to sync room status:', err);
+          }
+        }
+      }
+
+      if (updated) {
+        localStorage.setItem(recentListKey, JSON.stringify(recentRooms));
+        // Force state update to trigger UI re-renders on the homepage
+        set({ publicRooms: [...get().publicRooms] });
+      }
+    } catch (e) {
+      console.error('Failed parsing recent rooms:', e);
+    }
+  },
+
   connectRoom: (room_code) => {
     const { token, ws } = get();
     if (!token) return;
@@ -274,7 +340,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
       console.log(`[WS Broadcast]: ${event_type}`, payload);
 
       switch (event_type) {
-        case 'ROOM_STATE':
+        case 'ROOM_STATE': {
           set({
             room: {
               room_id: payload.room_id,
@@ -282,7 +348,8 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
               room_status: payload.room_status,
               host: payload.host,
               user_role: payload.user_role,
-              active_round: payload.active_round
+              active_round: payload.active_round,
+              users: payload.users || []
             }
           });
           
@@ -300,20 +367,39 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
               code: payload.room_id,
               name: payload.room_name,
               role: payload.user_role,
-              timestamp: Date.now()
+              timestamp: Date.now(),
+              completed: payload.room_status === 'completed'
             });
             list = list.slice(0, 5);
             localStorage.setItem(key, JSON.stringify(list));
           }
           break;
+        }
 
-        case 'USER_JOINED':
-          get().setToast(`User ${payload.user.username} entered the room as ${payload.role}.`, 'info');
+        case 'USER_JOINED': {
+          set((state) => ({
+            room: {
+              ...state.room,
+              users: payload.users || state.room.users
+            }
+          }));
+          const uName = payload.user?.username || 'Contestant';
+          const uRole = payload.user?.role || 'participant';
+          get().setToast(`User ${uName} entered the room as ${uRole}.`, 'info');
           break;
+        }
 
-        case 'USER_LEFT':
-          get().setToast(`User ${payload.username} left the room.`, 'info');
+        case 'USER_LEFT': {
+          set((state) => ({
+            room: {
+              ...state.room,
+              users: payload.users || state.room.users
+            }
+          }));
+          const uName = payload.user?.username || 'Contestant';
+          get().setToast(`User ${uName} left the room.`, 'info');
           break;
+        }
 
         case 'ROUND_STARTED':
           set((state) => ({
@@ -469,7 +555,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
           get().setToast('The round evaluation is complete! Scoring is finalized.', 'success');
           break;
 
-        case 'BATTLE_COMPLETED':
+        case 'BATTLE_COMPLETED': {
           set((state) => ({
             room: {
               ...state.room,
@@ -477,7 +563,29 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
             }
           }));
           get().setToast('The Creative Battle Room session has finished! Long live the champions!', 'success');
+          
+          // Mark this room as completed in the local history instead of purging it
+          const currentUserId = get().user?.id;
+          if (currentUserId) {
+            const key = `poiro_recent_rooms_${currentUserId}`;
+            const existing = localStorage.getItem(key);
+            if (existing) {
+              try {
+                let list = JSON.parse(existing);
+                list = list.map((r: any) => {
+                  if (r.code === payload.room_id) {
+                    return { ...r, completed: true };
+                  }
+                  return r;
+                });
+                localStorage.setItem(key, JSON.stringify(list));
+              } catch (e) {
+                console.error('Failed to update recent rooms to completed:', e);
+              }
+            }
+          }
           break;
+        }
 
         case 'ERROR':
           get().setToast(payload.message || 'An error occurred.', 'error');
@@ -512,7 +620,8 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
         room_status: null,
         host: null,
         user_role: null,
-        active_round: null
+        active_round: null,
+        users: []
       }
     });
   },

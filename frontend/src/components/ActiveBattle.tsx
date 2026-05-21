@@ -125,6 +125,100 @@ export const ActiveBattle: React.FC = () => {
     "Anti-gravity cosmetic campaign combining chrome and synthetic lavender."
   ];
 
+  if (room.room_status === 'completed') {
+    const submissions = room.active_round?.submissions || [];
+    const sortedSubmissions = [...submissions].sort((a, b) => {
+      if (a.rank && b.rank) return a.rank - b.rank;
+      if (a.rank) return -1;
+      if (b.rank) return 1;
+      return (b.score || 0) - (a.score || 0);
+    });
+
+    const winner = sortedSubmissions[0];
+
+    return (
+      <div className="w-full max-w-4xl mx-auto px-4 py-12 relative z-10">
+        <div className="glass-panel p-8 rounded-3xl border border-gray-800 text-center relative overflow-hidden">
+          <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-yellow-500 via-purple-500 to-cyan-500" />
+          
+          <Trophy className="w-20 h-20 text-yellow-400 mx-auto mb-6 animate-bounce" />
+          <h2 className="text-3xl font-extrabold text-white tracking-wide uppercase">Battle Arena Concluded</h2>
+          <p className="text-xs text-gray-400 mt-2 max-w-md mx-auto leading-relaxed">
+            The sensory campaign battle is over! All signals are processed, scores are finalized, and the champion has been declared by the director.
+          </p>
+
+          {winner ? (
+            <div className="my-10 p-6 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl max-w-md mx-auto relative overflow-hidden">
+              <div className="absolute -right-4 -bottom-4 opacity-5">
+                <Trophy className="w-32 h-32 text-yellow-400" />
+              </div>
+              
+              <div className="relative z-10 flex flex-col items-center">
+                <div className="w-20 h-20 rounded-full overflow-hidden bg-slate-950 border-2 border-yellow-400 p-1 shadow-[0_0_20px_rgba(234,179,8,0.2)]">
+                  <img src={getAvatarUrl(winner.participant.avatar_seed)} alt="Champion" className="w-full h-full object-cover rounded-full" />
+                </div>
+                <div className="mt-4">
+                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest bg-yellow-400 text-slate-950 mb-1">
+                    Arena Champion 🏆
+                  </span>
+                  <h3 className="text-xl font-bold text-white mt-1">{winner.participant.username}</h3>
+                  {winner.generated_content && (
+                    <p className="text-[11px] text-yellow-400/80 italic mt-1.5 px-4 font-serif">
+                      "{winner.generated_content.campaign_name}"
+                    </p>
+                  )}
+                  <div className="mt-4 flex items-center justify-center gap-4 text-xs font-bold font-mono">
+                    <span className="text-gray-400">SCORE: <strong className="text-white">{winner.score} pts</strong></span>
+                    <span className="text-gray-700">|</span>
+                    <span className="text-gray-400">RANK: <strong className="text-white">#{winner.rank || 1}</strong></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="my-10 py-6 text-center text-xs text-gray-500">
+              No participant campaign submissions were compiled in this battle.
+            </div>
+          )}
+
+          {sortedSubmissions.length > 1 && (
+            <div className="max-w-md mx-auto mt-6 text-left space-y-3">
+              <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1 mb-2">Final Leaderboard</h4>
+              {sortedSubmissions.slice(1).map((sub, idx) => (
+                <div key={sub.id} className="p-3 bg-slate-950/40 border border-gray-900 rounded-xl flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-mono font-bold text-gray-500">#{idx + 2}</span>
+                    <div className="w-7 h-7 rounded bg-slate-900 overflow-hidden border border-gray-800">
+                      <img src={getAvatarUrl(sub.participant.avatar_seed)} alt="Contestant" />
+                    </div>
+                    <div>
+                      <span className="block text-xs font-bold text-white">{sub.participant.username}</span>
+                      {sub.generated_content && (
+                        <span className="text-[10px] text-gray-500 font-serif block italic">{sub.generated_content.campaign_name}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right font-mono text-xs font-semibold text-gray-400">
+                    {sub.score} pts
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-10 flex flex-col sm:flex-row justify-center gap-3">
+            <button
+              onClick={disconnectRoom}
+              className="px-8 py-3 bg-slate-950/70 border border-gray-800 hover:border-gray-700 text-gray-300 hover:text-white font-bold uppercase text-xs tracking-wider rounded-xl transition-all focus:outline-none"
+            >
+              Exit Lobby & Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-4 gap-6 relative z-10">
       
@@ -187,30 +281,37 @@ export const ActiveBattle: React.FC = () => {
               </div>
             </div>
 
-            {/* Render other contestants as they submit */}
-            {room.active_round?.submissions.map((sub) => (
-              <div 
-                key={sub.id}
-                className={`p-2.5 bg-slate-950/40 border border-gray-900 rounded-xl flex items-center gap-3 justify-between ${
-                  sub.status === 'eliminated' ? 'opacity-40 border-red-950' : ''
-                }`}
-              >
-                <div className="flex items-center gap-3 truncate flex-1">
-                  <div className="w-8 h-8 rounded-lg overflow-hidden bg-slate-900 border border-gray-800">
-                    <img src={getAvatarUrl(sub.participant.avatar_seed)} alt="Contestant" />
+            {/* Render other connected contestants */}
+            {room.users?.filter(u => u.id !== room.host?.id).map((u) => {
+              const sub = room.active_round?.submissions.find(s => s.participant.id === u.id);
+              const isEliminated = sub?.status === 'eliminated';
+              
+              return (
+                <div 
+                  key={u.id}
+                  className={`p-2.5 bg-slate-950/40 border border-gray-900 rounded-xl flex items-center gap-3 justify-between ${
+                    isEliminated ? 'opacity-40 border-red-950' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-3 truncate flex-1">
+                    <div className="w-8 h-8 rounded-lg overflow-hidden bg-slate-900 border border-gray-800">
+                      <img src={getAvatarUrl(u.avatar_seed)} alt="Contestant" />
+                    </div>
+                    <div className="truncate flex-1">
+                      <span className="block text-xs font-bold text-white truncate">{u.username}</span>
+                      <span className={`text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 mt-0.5 ${
+                        isEliminated ? 'text-red-500' : 'text-cyan-400'
+                      }`}>
+                        {isEliminated ? 'Eliminated' : sub ? 'Active Sub' : 'Lobby Connected'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="truncate">
-                    <span className="block text-xs font-bold text-white truncate">{sub.participant.username}</span>
-                    <span className="text-[9px] text-cyan-400 font-semibold uppercase tracking-widest">
-                      {sub.status === 'eliminated' ? 'Eliminated' : 'Active Sub'}
-                    </span>
-                  </div>
+                  {sub?.job && <JobStatusBadge status={sub.job.status} />}
                 </div>
-                {sub.job && <JobStatusBadge status={sub.job.status} />}
-              </div>
-            ))}
+              );
+            })}
             
-            {room.active_round?.submissions.length === 0 && (
+            {(!room.users || room.users.filter(u => u.id !== room.host?.id).length === 0) && (
               <div className="py-6 text-center text-xs text-gray-600">
                 No telemetry signals yet. Waiting for participants...
               </div>

@@ -16,21 +16,54 @@ class ConnectionManager:
     def __init__(self):
         # Map room_id -> list of active WebSockets
         self.active_connections: Dict[str, List[WebSocket]] = {}
+        # Map room_id -> Dict of user_id -> user_data
+        self.room_users: Dict[str, Dict[str, dict]] = {}
+        # Map websocket -> (room_id, user_id)
+        self.socket_info: Dict[WebSocket, tuple] = {}
 
-    async def connect(self, room_id: str, websocket: WebSocket):
+    async def connect(self, room_id: str, websocket: WebSocket, user_info: dict):
         await websocket.accept()
         if room_id not in self.active_connections:
             self.active_connections[room_id] = []
         self.active_connections[room_id].append(websocket)
-        print(f"WS Client connected to room {room_id}. Total active: {len(self.active_connections[room_id])}")
+        
+        if room_id not in self.room_users:
+            self.room_users[room_id] = {}
+        
+        user_id = str(user_info["id"])
+        self.room_users[room_id][user_id] = user_info
+        self.socket_info[websocket] = (room_id, user_id)
+        print(f"WS Client connected to room {room_id}. Total active connections: {len(self.active_connections[room_id])}")
 
-    def disconnect(self, room_id: str, websocket: WebSocket):
-        if room_id in self.active_connections:
-            if websocket in self.active_connections[room_id]:
-                self.active_connections[room_id].remove(websocket)
-            if not self.active_connections[room_id]:
-                del self.active_connections[room_id]
-        print(f"WS Client disconnected. Rooms active: {list(self.active_connections.keys())}")
+    def disconnect(self, websocket: WebSocket):
+        if websocket in self.socket_info:
+            room_id, user_id = self.socket_info[websocket]
+            del self.socket_info[websocket]
+            
+            if room_id in self.active_connections:
+                if websocket in self.active_connections[room_id]:
+                    self.active_connections[room_id].remove(websocket)
+                if not self.active_connections[room_id]:
+                    del self.active_connections[room_id]
+            
+            # Check if user has other connections open for this room (multi-tab)
+            still_connected = False
+            for ws, (r_id, u_id) in self.socket_info.items():
+                if r_id == room_id and u_id == user_id:
+                    still_connected = True
+                    break
+            
+            if not still_connected and room_id in self.room_users:
+                if user_id in self.room_users[room_id]:
+                    del self.room_users[room_id][user_id]
+                if not self.room_users[room_id]:
+                    del self.room_users[room_id]
+            print(f"WS Client disconnected. Rooms active: {list(self.active_connections.keys())}")
+
+    def get_room_users(self, room_id: str) -> List[dict]:
+        if room_id in self.room_users:
+            return list(self.room_users[room_id].values())
+        return []
 
     async def send_personal_message(self, message: dict, websocket: WebSocket):
         await websocket.send_json(message)
@@ -156,6 +189,10 @@ def get_room_details(room_id: str, db: Session = Depends(get_db), current_user: 
         )
     return room
 
+@app.get("/api/rooms", response_model=List[schemas.RoomOut])
+def get_all_active_rooms(db: Session = Depends(get_db), current_user: models.User = Depends(security.get_current_user)):
+    return db.query(models.Room).filter(models.Room.status != "completed").order_by(models.Room.created_at.desc()).all()
+
 
 # ==========================================
 # WEBSOCKET REAL-TIME ENDPOINT
@@ -192,7 +229,13 @@ async def websocket_endpoint(websocket: WebSocket, room_code: str, token: str | 
         return
 
     # 4. Accept connection and group in ConnectionManager
-    await manager.connect(room_code, websocket)
+    user_info = {
+        "id": user.id,
+        "username": user.username,
+        "avatar_seed": user.avatar_seed,
+        "role": "host" if user.id == room.host_id else "participant"
+    }
+    await manager.connect(room_code, websocket, user_info)
 
     try:
         # 5. Send initial Room State to the connecting user
@@ -209,7 +252,8 @@ async def websocket_endpoint(websocket: WebSocket, room_code: str, token: str | 
                 "avatar_seed": room.host.avatar_seed
             },
             "user_role": "host" if user.id == room.host_id else "participant",
-            "active_round": None
+            "active_round": None,
+            "users": manager.get_room_users(room_code)
         }
 
         if active_round:
@@ -261,12 +305,9 @@ async def websocket_endpoint(websocket: WebSocket, room_code: str, token: str | 
         await manager.broadcast(room_code, {
             "event_type": "USER_JOINED",
             "payload": {
-                "user": {
-                    "id": user.id,
-                    "username": user.username,
-                    "avatar_seed": user.avatar_seed
-                },
-                "role": "host" if user.id == room.host_id else "participant"
+                "user": user_info,
+                "role": "host" if user.id == room.host_id else "participant",
+                "users": manager.get_room_users(room_code)
             }
         })
 
@@ -460,12 +501,16 @@ async def websocket_endpoint(websocket: WebSocket, room_code: str, token: str | 
                 })
 
     except WebSocketDisconnect:
-        manager.disconnect(room_code, websocket)
+        manager.disconnect(websocket)
         await manager.broadcast(room_code, {
             "event_type": "USER_LEFT",
             "payload": {
-                "user_id": user.id,
-                "username": user.username
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                    "avatar_seed": user.avatar_seed
+                },
+                "users": manager.get_room_users(room_code)
             }
         })
     finally:

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBattleStore } from '../store/useBattleStore';
 import { PlusCircle, Link, LogOut, Terminal, Sparkles } from 'lucide-react';
 
@@ -8,7 +8,14 @@ export const CreateJoinRoom: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { user, createRoom, connectRoom, logout, setToast } = useBattleStore();
+  const { user, createRoom, connectRoom, logout, setToast, publicRooms, fetchPublicRooms, syncRecentRoomsStatus } = useBattleStore();
+
+  useEffect(() => {
+    fetchPublicRooms();
+    syncRecentRoomsStatus();
+    const interval = setInterval(fetchPublicRooms, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleCreateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -197,53 +204,155 @@ export const CreateJoinRoom: React.FC = () => {
           const rawRecent = localStorage.getItem(recentListKey);
           const recentRooms = rawRecent ? JSON.parse(rawRecent) : [];
 
-          if (recentRooms.length === 0) return null;
+          const activeRooms = recentRooms.filter((r: any) => !r.completed);
+          const completedRooms = recentRooms.filter((r: any) => r.completed);
 
           return (
-            <div className="glass-panel p-6 rounded-2xl border border-gray-800 space-y-4">
-              <div className="flex items-center gap-2 text-cyan-400">
-                <Terminal className="w-4 h-4 text-purple-400" />
-                <h4 className="text-xs font-bold uppercase tracking-widest text-white">Active Portal Access History</h4>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {recentRooms.map((r: any) => (
-                  <div 
-                    key={r.code}
-                    className="p-4 bg-slate-950/60 border border-gray-900 hover:border-purple-500/30 rounded-xl flex items-center justify-between gap-4 transition-all group hover:bg-slate-950/80"
-                  >
-                    <div className="truncate flex-1">
-                      <span className="block text-xs font-bold text-white truncate leading-normal">
-                        {r.name}
-                      </span>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-slate-900 text-gray-400 border border-gray-800">
-                          Code: {r.code}
-                        </span>
-                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${
-                          r.role === 'host' ? 'bg-purple-950/50 text-purple-400 border border-purple-500/10' : 'bg-cyan-950/50 text-cyan-400 border border-cyan-500/10'
-                        }`}>
-                          {r.role === 'host' ? 'Director' : 'Contestant'}
-                        </span>
-                      </div>
+            <div className="space-y-6">
+              {/* Active Portal Access History */}
+              <div className="glass-panel p-6 rounded-2xl border border-gray-800 space-y-4">
+                <div className="flex items-center gap-2 text-cyan-400 border-b border-gray-800 pb-2">
+                  <Terminal className="w-4 h-4 text-purple-400" />
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-white">Active Portal Access History</h4>
+                </div>
+                
+                <div className="max-h-[220px] overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+                  {activeRooms.length === 0 ? (
+                    <div className="py-8 text-center text-xs text-gray-600">
+                      No active portal signals detected. Create or decrypt an arena above to begin!
                     </div>
+                  ) : (
+                    activeRooms.map((r: any) => (
+                      <div 
+                        key={r.code}
+                        className="p-3 bg-slate-950/60 border border-gray-900 hover:border-purple-500/30 rounded-xl flex items-center justify-between gap-4 transition-all group hover:bg-slate-950/80"
+                      >
+                        <div className="truncate flex-1">
+                          <span className="block text-xs font-bold text-white truncate leading-normal">
+                            {r.name}
+                          </span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-slate-900 text-gray-400 border border-gray-800">
+                              Code: {r.code}
+                            </span>
+                            <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${
+                              r.role === 'host' ? 'bg-purple-950/50 text-purple-400 border border-purple-500/10' : 'bg-cyan-950/50 text-cyan-400 border border-cyan-500/10'
+                            }`}>
+                              {r.role === 'host' ? 'Director' : 'Contestant'}
+                            </span>
+                          </div>
+                        </div>
 
-                    <button
-                      onClick={() => {
-                        connectRoom(r.code);
-                        setToast(`Connecting back to Arena lobby: ${r.code}...`, 'success');
-                      }}
-                      disabled={loading}
-                      className="px-3.5 py-2 bg-purple-500/10 hover:bg-purple-500 text-purple-400 hover:text-slate-950 border border-purple-500/30 hover:border-transparent rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all focus:outline-none shrink-0"
-                    >
-                      Re-Connect
-                    </button>
-                  </div>
-                ))}
+                        <button
+                          onClick={() => {
+                            connectRoom(r.code);
+                            setToast(`Connecting back to Arena lobby: ${r.code}...`, 'success');
+                          }}
+                          disabled={loading}
+                          className="px-3.5 py-2 bg-purple-500/10 hover:bg-purple-500 text-purple-400 hover:text-slate-950 border border-purple-500/30 hover:border-transparent rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all focus:outline-none shrink-0"
+                        >
+                          Re-Connect
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Completed Arena Triumphs */}
+              <div className="glass-panel p-6 rounded-2xl border border-gray-800 space-y-4">
+                <div className="flex items-center gap-2 text-yellow-400 border-b border-gray-800 pb-2">
+                  <Sparkles className="w-4 h-4 text-yellow-400 animate-pulse" />
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-white">Completed Arena Triumphs</h4>
+                </div>
+                
+                <div className="max-h-[220px] overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+                  {completedRooms.length === 0 ? (
+                    <div className="py-8 text-center text-xs text-gray-600">
+                      No finalized battles archived yet. Conclude an active battle to create a monument!
+                    </div>
+                  ) : (
+                    completedRooms.map((r: any) => (
+                      <div 
+                        key={r.code}
+                        className="p-3 bg-slate-950/40 border border-gray-900/60 rounded-xl flex items-center justify-between gap-4 transition-all group hover:bg-slate-950/60"
+                      >
+                        <div className="truncate flex-1">
+                          <span className="block text-xs font-bold text-gray-400 truncate leading-normal">
+                            {r.name}
+                          </span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-slate-900 text-gray-600 border border-gray-800">
+                              Code: {r.code}
+                            </span>
+                            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-yellow-950/20 text-yellow-500/80 border border-yellow-500/10">
+                              Concluded
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            connectRoom(r.code);
+                            setToast(`Retrieving Concluded Arena Podium: ${r.code}...`, 'success');
+                          }}
+                          disabled={loading}
+                          className="px-3.5 py-2 bg-yellow-500/10 hover:bg-yellow-500 text-yellow-500 hover:text-slate-950 border border-yellow-500/30 hover:border-transparent rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all focus:outline-none shrink-0"
+                        >
+                          View Podium
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           );
         })()}
+
+        {/* Public Active Arenas Listing */}
+        {publicRooms && publicRooms.length > 0 && (
+          <div className="glass-panel p-6 rounded-2xl border border-gray-800 space-y-4">
+            <div className="flex items-center gap-2 text-cyan-400">
+              <Sparkles className="w-4 h-4 text-cyan-400" />
+              <h4 className="text-xs font-bold uppercase tracking-widest text-white">Live Public Battle Arenas</h4>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {publicRooms.map((r: any) => (
+                <div 
+                  key={r.id}
+                  className="p-4 bg-slate-950/60 border border-gray-900 hover:border-cyan-500/30 rounded-xl flex items-center justify-between gap-4 transition-all group hover:bg-slate-950/80"
+                >
+                  <div className="truncate flex-1">
+                    <span className="block text-xs font-bold text-white truncate leading-normal">
+                      {r.name}
+                    </span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-slate-900 text-gray-400 border border-gray-800">
+                        Code: {r.id}
+                      </span>
+                      <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-purple-950/50 text-purple-400 border border-purple-500/10">
+                        Host: {r.host?.username || 'Director'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      connectRoom(r.id);
+                      setToast(`Infiltrating Arena lobby: ${r.id}...`, 'success');
+                    }}
+                    disabled={loading}
+                    className="px-3.5 py-2 bg-cyan-400/10 hover:bg-cyan-400 text-cyan-400 hover:text-slate-950 border border-cyan-400/30 hover:border-transparent rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all focus:outline-none shrink-0"
+                  >
+                    Join Arena
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
