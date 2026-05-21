@@ -2,9 +2,9 @@ import asyncio
 import json
 import datetime
 from sqlalchemy.orm import Session
-from .database import SessionLocal
+from app.core.database import SessionLocal
+from app.models import Job, Submission
 from .ai_provider import ai_provider, AIProviderError
-from . import models
 
 # In-process asynchronous task queue
 generation_queue = asyncio.Queue()
@@ -30,8 +30,8 @@ async def worker_loop(broadcast_callback):
         db: Session = SessionLocal()
         try:
             # Fetch Job and Submission
-            job = db.query(models.Job).filter(models.Job.id == job_id).first()
-            submission = db.query(models.Submission).filter(models.Submission.id == submission_id).first()
+            job = db.query(Job).filter(Job.id == job_id).first()
+            submission = db.query(Submission).filter(Submission.id == submission_id).first()
 
             if not job or not submission:
                 print(f"Error: Job {job_id} or Submission {submission_id} not found in database.")

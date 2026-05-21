@@ -1,7 +1,7 @@
 import asyncio
 import random
 import httpx
-from .config import settings
+from app.core.config import settings
 
 class AIProviderError(Exception):
     pass

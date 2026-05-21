@@ -9,11 +9,11 @@ from sqlalchemy.orm import sessionmaker
 os.environ["DATABASE_URL"] = "sqlite:///./test_poiro_battle.db"
 os.environ["FORCE_MOCK_AI"] = "true"
 
-from app.database import Base, get_db
+from app.core.database import Base, get_db
 from app.main import app as fastapi_app
 from app import models
-import app.worker
-import app.main
+import app.services.worker
+from app.api.websocket import manager
 
 async def mock_queue_put(item):
     job_id = item["job_id"]
@@ -30,7 +30,7 @@ async def mock_queue_put(item):
         # 1. Transition to running
         job.status = "running"
         db.commit()
-        await app.main.manager.broadcast(room_id, {
+        await manager.broadcast(room_id, {
             "event_type": "JOB_STATUS_UPDATED",
             "payload": {
                 "job_id": job.id,
@@ -54,7 +54,7 @@ async def mock_queue_put(item):
         submission.image_url = "Neon hologram bottle Octane render"
         db.commit()
         
-        await app.main.manager.broadcast(room_id, {
+        await manager.broadcast(room_id, {
             "event_type": "SUBMISSION_COMPLETED",
             "payload": {
                 "submission_id": submission.id,
@@ -71,7 +71,7 @@ async def mock_queue_put(item):
         db.close()
 
 # Apply the mock to the queue inside the worker module
-app.worker.generation_queue.put = mock_queue_put
+app.services.worker.generation_queue.put = mock_queue_put
 
 # Use a clean test database
 TEST_DB_URL = "sqlite:///./test_poiro_battle.db"
