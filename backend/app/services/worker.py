@@ -4,7 +4,7 @@ import datetime
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.models import Job, Submission
-from .ai_provider import ai_provider, AIProviderError
+from app.services.ai import ai_provider, AIProviderError
 
 # In-process asynchronous task queue
 generation_queue = asyncio.Queue()
