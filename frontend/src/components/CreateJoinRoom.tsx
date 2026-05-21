@@ -190,6 +190,60 @@ export const CreateJoinRoom: React.FC = () => {
             </form>
           </div>
         </div>
+
+        {/* Recent Arenas Quick Access Grid (Fast Portal Access) */}
+        {(() => {
+          const recentListKey = `poiro_recent_rooms_${user?.id}`;
+          const rawRecent = localStorage.getItem(recentListKey);
+          const recentRooms = rawRecent ? JSON.parse(rawRecent) : [];
+
+          if (recentRooms.length === 0) return null;
+
+          return (
+            <div className="glass-panel p-6 rounded-2xl border border-gray-800 space-y-4">
+              <div className="flex items-center gap-2 text-cyan-400">
+                <Terminal className="w-4 h-4 text-purple-400" />
+                <h4 className="text-xs font-bold uppercase tracking-widest text-white">Active Portal Access History</h4>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {recentRooms.map((r: any) => (
+                  <div 
+                    key={r.code}
+                    className="p-4 bg-slate-950/60 border border-gray-900 hover:border-purple-500/30 rounded-xl flex items-center justify-between gap-4 transition-all group hover:bg-slate-950/80"
+                  >
+                    <div className="truncate flex-1">
+                      <span className="block text-xs font-bold text-white truncate leading-normal">
+                        {r.name}
+                      </span>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-slate-900 text-gray-400 border border-gray-800">
+                          Code: {r.code}
+                        </span>
+                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${
+                          r.role === 'host' ? 'bg-purple-950/50 text-purple-400 border border-purple-500/10' : 'bg-cyan-950/50 text-cyan-400 border border-cyan-500/10'
+                        }`}>
+                          {r.role === 'host' ? 'Director' : 'Contestant'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        connectRoom(r.code);
+                        setToast(`Connecting back to Arena lobby: ${r.code}...`, 'success');
+                      }}
+                      disabled={loading}
+                      className="px-3.5 py-2 bg-purple-500/10 hover:bg-purple-500 text-purple-400 hover:text-slate-950 border border-purple-500/30 hover:border-transparent rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all focus:outline-none shrink-0"
+                    >
+                      Re-Connect
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

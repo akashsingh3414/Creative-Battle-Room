@@ -189,6 +189,13 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
 
     try {
       set({ token, user: JSON.parse(localUser) });
+      
+      // Auto-reconnect active room from previous session if it exists!
+      const activeRoomCode = localStorage.getItem('poiro_active_room_code');
+      if (activeRoomCode) {
+        get().connectRoom(activeRoomCode);
+      }
+
       // Validate token silently with backend
       const res = await fetch(`${API_BASE}/api/auth/me`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -278,6 +285,26 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
               active_round: payload.active_round
             }
           });
+          
+          // Save active room memory for instant auto-recovery on page refresh
+          localStorage.setItem('poiro_active_room_code', payload.room_id);
+
+          // Save to user-specific recent lobbies roster list (Fast Portal Access)
+          const currentUserId = get().user?.id;
+          if (currentUserId) {
+            const key = `poiro_recent_rooms_${currentUserId}`;
+            const existing = localStorage.getItem(key);
+            let list = existing ? JSON.parse(existing) : [];
+            list = list.filter((r: any) => r.code !== payload.room_id);
+            list.unshift({
+              code: payload.room_id,
+              name: payload.room_name,
+              role: payload.user_role,
+              timestamp: Date.now()
+            });
+            list = list.slice(0, 5);
+            localStorage.setItem(key, JSON.stringify(list));
+          }
           break;
 
         case 'USER_JOINED':
@@ -475,6 +502,19 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
       ws.close();
       set({ ws: null, wsConnected: false });
     }
+    // Clear active room memory upon manual disconnect so it doesn't auto-reconnect
+    localStorage.removeItem('poiro_active_room_code');
+    // Force reset room state to dashboard view
+    set({
+      room: {
+        room_id: null,
+        room_name: null,
+        room_status: null,
+        host: null,
+        user_role: null,
+        active_round: null
+      }
+    });
   },
 
   // WS Emits
