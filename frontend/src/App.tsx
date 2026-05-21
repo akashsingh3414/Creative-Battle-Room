@@ -27,61 +27,45 @@ function App() {
   }, [toastMessage, clearToast]);
 
   return (
-    <div className="min-h-screen bg-[#070b13] text-gray-100 flex flex-col font-sans relative overflow-x-hidden select-none selection:bg-purple-500/30 selection:text-white">
-
-      {/* Dynamic Ambient Background Glows */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[60%] rounded-full bg-purple-950/10 blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] rounded-full bg-cyan-950/10 blur-[150px] pointer-events-none" />
-
-      {/* Cyber Grid Overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.03]"
-        style={{
-          backgroundImage: `
-            linear-gradient(to right, #4b5563 1px, transparent 1px),
-            linear-gradient(to bottom, #4b5563 1px, transparent 1px)
-          `,
-          backgroundSize: '32px 32px'
-        }}
-      />
+    <div className="min-h-screen bg-[#0b1416] text-[#d7dadc] flex flex-col font-sans relative select-none selection:bg-[#ff4500]/25 selection:text-white">
 
       {/* Main Header */}
-      <header className="w-full bg-[#0a0f1d]/80 border-b border-gray-900/60 backdrop-blur-md relative z-30 shrink-0">
+      <header className="w-full bg-[#122326] border-b border-[#2a3c42] relative z-30 shrink-0 shadow-md shadow-black/20">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="p-1.5 bg-gradient-to-br from-purple-500 to-cyan-400 rounded-lg text-slate-950 shadow-[0_0_10px_rgba(168,85,247,0.3)] animate-pulse">
-              <Sparkles className="w-4 h-4" />
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-[#ff4500] rounded-lg text-white shadow-md shadow-[#ff4500]/25">
+              <Sparkles className="w-4.5 h-4.5" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-white tracking-widest uppercase">
-                POIRO <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">CREATIVE</span>
+              <h1 className="text-base font-extrabold text-white tracking-widest uppercase">
+                POIRO <span className="text-[#ff4500]">CREATIVE</span>
               </h1>
-              <span className="text-[9px] text-gray-500 font-semibold uppercase tracking-wider block mt-0.5">
+              <span className="text-[10px] text-[#8797a1] font-bold uppercase tracking-wider block mt-0.5">
                 AI Battle Arena Console
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-slate-950/80 border border-gray-900 rounded-xl">
-              <Activity className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-[#1a2a2d] border border-[#2a3c42] rounded-xl">
+              <Activity className="w-4 h-4 text-[#ff4500] animate-pulse" />
+              <span className="text-xs text-[#8797a1] font-bold uppercase tracking-wider">
                 Telemetry Grid: <strong className="text-white">Active</strong>
               </span>
             </div>
 
             {user && (
-              <div className="flex items-center gap-2.5 pl-3 border-l border-gray-900">
-                <div className="w-7 h-7 rounded-lg overflow-hidden bg-slate-900 border border-purple-500/20">
+              <div className="flex items-center gap-3 pl-3 border-l border-[#2a3c42]">
+                <div className="w-8 h-8 rounded-lg overflow-hidden bg-[#1a2a2d] border border-[#2a3c42]">
                   <img
-                    src={`https://api.dicebear.com/7.x/bottts/svg?seed=${user.avatar_seed}&backgroundColor=0f172a`}
+                    src={`https://api.dicebear.com/7.x/bottts/svg?seed=${user.avatar_seed}&backgroundColor=122326`}
                     alt="User"
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="hidden md:block text-left">
-                  <span className="block text-xs font-bold text-white leading-none">{user.username}</span>
-                  <span className="text-[9px] text-gray-500 font-medium">Sync Active</span>
+                  <span className="block text-sm font-bold text-white leading-none">{user.username}</span>
+                  <span className="text-[10px] text-[#8797a1] font-semibold block mt-1">Sync Active</span>
                 </div>
               </div>
             )}
@@ -101,45 +85,46 @@ function App() {
       </main>
 
       {/* Footer Details */}
-      <footer className="w-full bg-[#05080f] py-4 border-t border-gray-900/60 relative z-30 shrink-0 text-center">
-        <span className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">
-          Poiro Creative Battle Room
+      <footer className="w-full bg-[#122326] py-2 border-t border-[#2a3c42] relative z-30 shrink-0 text-center">
+        <span className="text-[10px] text-[#8797a1] font-bold uppercase tracking-widest">
+          Poiro Creative Battle Room — Reddit Dark Edition
         </span>
       </footer>
 
       {/* Real-time Toast Alerts Portal */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-4 duration-300">
-          <div className={`p-4 rounded-xl border backdrop-blur-md shadow-2xl flex items-start gap-3 max-w-sm ${toastMessage.type === 'success'
-              ? 'bg-emerald-950/90 border-emerald-500/30 text-emerald-300 shadow-emerald-500/5'
+          <div className={`p-4 rounded-xl border backdrop-blur-md shadow-2xl flex items-start gap-3 max-w-sm ${
+            toastMessage.type === 'success'
+              ? 'bg-[#122b21] border-[#1e5237] text-[#8ce0b0] shadow-black/40'
               : toastMessage.type === 'error'
-                ? 'bg-red-950/90 border-red-500/30 text-red-300 shadow-red-500/5'
-                : 'bg-slate-950/90 border-purple-500/30 text-purple-300 shadow-purple-500/5'
-            }`}>
+                ? 'bg-[#2d1215] border-[#5a1c22] text-[#ff8c95] shadow-black/40'
+                : 'bg-[#122326] border-[#2a3c42] text-[#ff4500] shadow-black/40'
+          }`}>
             <div className="shrink-0 mt-0.5">
               {toastMessage.type === 'success' ? (
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <ShieldCheck className="w-4.5 h-4.5 text-[#4ade80]" />
               ) : toastMessage.type === 'error' ? (
-                <AlertCircle className="w-4 h-4 text-red-400" />
+                <AlertCircle className="w-4.5 h-4.5 text-[#f87171]" />
               ) : (
-                <Activity className="w-4 h-4 text-purple-400" />
+                <Activity className="w-4.5 h-4.5 text-[#ff4500]" />
               )}
             </div>
 
             <div className="flex-1 text-left">
-              <span className="block text-[10px] font-bold uppercase tracking-widest text-white mb-0.5">
+              <span className="block text-[10px] font-bold uppercase tracking-widest text-white mb-1">
                 {toastMessage.type === 'success' ? 'Telemetry Success' : toastMessage.type === 'error' ? 'Security Alert' : 'System Notice'}
               </span>
-              <p className="text-xs text-gray-300 leading-relaxed font-medium">
+              <p className="text-sm text-[#d7dadc] leading-relaxed font-semibold">
                 {toastMessage.text}
               </p>
             </div>
 
             <button
               onClick={clearToast}
-              className="p-1 border border-transparent hover:border-gray-800 hover:text-white rounded-lg transition-all focus:outline-none shrink-0"
+              className="p-1 border border-transparent hover:border-[#2a3c42] hover:text-white rounded-lg transition-all focus:outline-none shrink-0 cursor-pointer text-[#8797a1]"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>

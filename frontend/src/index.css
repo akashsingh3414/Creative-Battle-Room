@@ -1,24 +1,27 @@
 @import "tailwindcss";
 
 @theme {
-  --color-cyber-purple: #a855f7;
-  --color-cyber-cyan: #06b6d4;
-  --color-cyber-pink: #f43f5e;
-  --color-bg-dark: #070a13;
-  --color-bg-card: rgba(13, 18, 30, 0.85);
+  --color-cyber-purple: #ff4500; /* Shift accents to iconic Reddit Orange-Red */
+  --color-cyber-cyan: #24a0ed;   /* Soothing Reddit Blue */
+  --color-cyber-pink: #ff585b;
+  --color-bg-dark: #0b1416;      /* Modern Reddit dark background */
+  --color-bg-card: #122326;      /* Slightly lighter slate-teal card body */
+}
+
+html {
+  font-size: 16px; /* High legibility base */
 }
 
 body {
   background-color: var(--color-bg-dark);
-  color: #f8fafc; /* Crisp Slate-50 high-contrast primary text */
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  color: #d7dadc; /* Soothing, low-glare primary reading text */
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   margin: 0;
   padding: 0;
   min-height: 100vh;
   overflow-x: hidden;
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(168, 85, 247, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.12) 0px, transparent 50%);
+  font-size: 1.05rem; /* Overall body text scale-up */
+  line-height: 1.6;
 }
 
 #root {
@@ -27,31 +30,32 @@ body {
   flex-direction: column;
 }
 
-/* Glassmorphism custom classes - elevated contrast */
+/* Glassmorphism custom classes - Reddit Dark Quartz */
 .glass-panel {
-  background: rgba(13, 18, 30, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.12); /* Brighter, high-contrast separation outline */
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+  background: #122326;
+  border: 1px solid #2a3c42; /* Clean, visible flat border */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
 .glass-panel-glow {
-  background: rgba(13, 18, 30, 0.9);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(168, 85, 247, 0.35);
-  box-shadow: 0 0 25px rgba(168, 85, 247, 0.15);
+  background: #182a2f;
+  border: 1px solid #ff4500;
+  box-shadow: 0 0 12px rgba(255, 69, 0, 0.15);
 }
 
 /* Dynamic Interactive Transitions */
 input, textarea {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #1a2a2d;
+  color: #ffffff;
+  border: 1px solid #2a3c42;
 }
 
 input:focus, textarea:focus {
-  border-color: var(--color-cyber-cyan) !important;
-  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2) !important;
-  background: rgba(8, 12, 24, 0.95) !important;
+  border-color: #ff4500 !important;
+  box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.2) !important;
+  background: #1a2a2d !important;
   outline: none;
 }
 
@@ -60,13 +64,12 @@ input:focus, textarea:focus {
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #070a13;
+  background: #0b1416;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #2a3c42;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #ff4500;
 }
-
