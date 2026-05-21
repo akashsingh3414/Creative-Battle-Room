@@ -8,7 +8,7 @@ export const CreateJoinRoom: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { user, createRoom, connectRoom, logout, setToast, publicRooms, fetchPublicRooms, recentRooms, fetchUserHistory } = useBattleStore();
+  const { user, createRoom, connectRoom, logout, setToast, recentRooms, fetchUserHistory } = useBattleStore();
 
   useEffect(() => {
     fetchUserHistory();

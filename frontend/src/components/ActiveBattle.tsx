@@ -3,7 +3,7 @@ import { useBattleStore, type Submission } from '../store/useBattleStore';
 import { JobStatusBadge } from './JobStatusBadge';
 import {
   Users, Trophy, Skull, Play, ShieldAlert, Check,
-  Send, Copy, ArrowLeft, Terminal, AlertTriangle, Flame, Sparkles, Award, Lock, Unlock
+  Send, Copy, ArrowLeft, Terminal, AlertTriangle, Flame, Sparkles, Award, Unlock
 } from 'lucide-react';
 
 export const ActiveBattle: React.FC = () => {
