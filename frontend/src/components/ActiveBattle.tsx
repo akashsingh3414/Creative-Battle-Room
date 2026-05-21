@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useBattleStore, type Submission } from '../store/useBattleStore';
 import { JobStatusBadge } from './JobStatusBadge';
-import { 
-  Users, Trophy, Skull, Play, ShieldAlert, Check, 
+import {
+  Users, Trophy, Skull, Play, ShieldAlert, Check,
   Send, Copy, ArrowLeft, Terminal, AlertTriangle, Flame, Sparkles, Award
 } from 'lucide-react';
 
 export const ActiveBattle: React.FC = () => {
-  const { 
+  const {
     room, wsConnected, disconnectRoom, setToast,
     startRound, submitPrompt, lockSubmissions, scoreSubmission, completeRound, endBattle
   } = useBattleStore();
@@ -35,7 +35,7 @@ export const ActiveBattle: React.FC = () => {
   useEffect(() => {
     if (room.active_round) {
       setEventFeed((prev) => [
-        ...prev, 
+        ...prev,
         `[arena] Round ${room.active_round?.round_number} active. Theme: "${room.active_round?.prompt_theme}"`
       ]);
     }
@@ -43,7 +43,7 @@ export const ActiveBattle: React.FC = () => {
 
   useEffect(() => {
     if (!room.active_round?.submissions) return;
-    
+
     // Log job telemetries
     room.active_round.submissions.forEach((sub) => {
       if (sub.job?.status === 'running') {
@@ -104,11 +104,11 @@ export const ActiveBattle: React.FC = () => {
     const scoreVal = sub.score ?? 0;
     const rankVal = sub.rank ?? null;
     scoreSubmission(sub.id, scoreVal, rankVal, nextStatus);
-    
-    const alertMsg = nextStatus === 'eliminated' 
+
+    const alertMsg = nextStatus === 'eliminated'
       ? `Eliminated contestant ${sub.participant.username} from the arena!`
       : `Reinstated contestant ${sub.participant.username} back into the arena.`;
-      
+
     setToast(alertMsg, nextStatus === 'eliminated' ? 'error' : 'success');
     setEventFeed((prev) => [...prev, `[host] Contestant ${sub.participant.username} is ${nextStatus.toUpperCase()}!`]);
   };
@@ -138,21 +138,21 @@ export const ActiveBattle: React.FC = () => {
 
     return (
       <div className="w-full max-w-4xl mx-auto px-4 py-12 relative z-10">
-        <div className="glass-panel p-8 rounded-3xl border border-gray-800 text-center relative overflow-hidden">
+        <div className="glass-panel p-8 rounded-3xl border border-slate-800 text-center relative overflow-hidden shadow-2xl">
           <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-yellow-500 via-purple-500 to-cyan-500" />
-          
+
           <Trophy className="w-20 h-20 text-yellow-400 mx-auto mb-6 animate-bounce" />
           <h2 className="text-3xl font-extrabold text-white tracking-wide uppercase">Battle Arena Concluded</h2>
-          <p className="text-xs text-gray-400 mt-2 max-w-md mx-auto leading-relaxed">
+          <p className="text-xs text-slate-300 mt-2 max-w-md mx-auto leading-relaxed">
             The sensory campaign battle is over! All signals are processed, scores are finalized, and the champion has been declared by the director.
           </p>
 
           {winner ? (
-            <div className="my-10 p-6 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl max-w-md mx-auto relative overflow-hidden">
+            <div className="my-10 p-6 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl max-w-md mx-auto relative overflow-hidden shadow-lg shadow-yellow-500/5">
               <div className="absolute -right-4 -bottom-4 opacity-5">
                 <Trophy className="w-32 h-32 text-yellow-400" />
               </div>
-              
+
               <div className="relative z-10 flex flex-col items-center">
                 <div className="w-20 h-20 rounded-full overflow-hidden bg-slate-950 border-2 border-yellow-400 p-1 shadow-[0_0_20px_rgba(234,179,8,0.2)]">
                   <img src={getAvatarUrl(winner.participant.avatar_seed)} alt="Champion" className="w-full h-full object-cover rounded-full" />
@@ -168,33 +168,33 @@ export const ActiveBattle: React.FC = () => {
                     </p>
                   )}
                   <div className="mt-4 flex items-center justify-center gap-4 text-xs font-bold font-mono">
-                    <span className="text-gray-400">SCORE: <strong className="text-white">{winner.score} pts</strong></span>
-                    <span className="text-gray-700">|</span>
-                    <span className="text-gray-400">RANK: <strong className="text-white">#{winner.rank || 1}</strong></span>
+                    <span className="text-slate-300">SCORE: <strong className="text-white">{winner.score} pts</strong></span>
+                    <span className="text-slate-700">|</span>
+                    <span className="text-slate-300">RANK: <strong className="text-white">#{winner.rank || 1}</strong></span>
                   </div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="my-10 py-6 text-center text-xs text-gray-500">
+            <div className="my-10 py-6 text-center text-xs text-slate-500">
               No participant campaign submissions were compiled in this battle.
             </div>
           )}
 
           {sortedSubmissions.length > 1 && (
             <div className="max-w-md mx-auto mt-6 text-left space-y-3">
-              <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1 mb-2">Final Leaderboard</h4>
+              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1 mb-2">Final Leaderboard</h4>
               {sortedSubmissions.slice(1).map((sub, idx) => (
-                <div key={sub.id} className="p-3 bg-slate-950/40 border border-gray-900 rounded-xl flex items-center justify-between">
+                <div key={sub.id} className="p-3 bg-slate-950/40 border border-slate-800 rounded-xl flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-xs font-mono font-bold text-gray-500">#{idx + 2}</span>
-                    <div className="w-7 h-7 rounded bg-slate-900 overflow-hidden border border-gray-800">
+                    <span className="text-xs font-mono font-bold text-slate-500">#{idx + 2}</span>
+                    <div className="w-7 h-7 rounded bg-slate-900 overflow-hidden border border-slate-800">
                       <img src={getAvatarUrl(sub.participant.avatar_seed)} alt="Contestant" />
                     </div>
                     <div>
                       <span className="block text-xs font-bold text-white">{sub.participant.username}</span>
                       {sub.generated_content && (
-                        <span className="text-[10px] text-gray-500 font-serif block italic">{sub.generated_content.campaign_name}</span>
+                        <span className="text-[10px] text-slate-400 font-serif block italic">{sub.generated_content.campaign_name}</span>
                       )}
                     </div>
                   </div>
@@ -221,11 +221,11 @@ export const ActiveBattle: React.FC = () => {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-4 gap-6 relative z-10">
-      
+
       {/* HEADER SECTION (Full-width equivalent) */}
       <div className="lg:col-span-4 glass-panel px-6 py-4 rounded-2xl border border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={disconnectRoom}
             className="p-2 border border-gray-800 hover:border-gray-700 hover:text-white rounded-xl transition-all"
           >
@@ -243,16 +243,16 @@ export const ActiveBattle: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="px-3 py-1.5 bg-slate-900 border border-gray-800 rounded-xl flex items-center gap-2">
+          <div className="px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
-            <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">
+            <span className="text-xs text-slate-300 font-semibold uppercase tracking-wider">
               Role: <strong className="text-white">{room.user_role}</strong>
             </span>
           </div>
 
           <button
             onClick={handleCopyCode}
-            className="flex items-center gap-1.5 px-4 py-2 bg-slate-950/70 border border-gray-800 hover:border-cyan-500/30 text-gray-400 hover:text-cyan-400 text-xs font-semibold rounded-xl uppercase tracking-wider transition-all focus:outline-none"
+            className="flex items-center gap-1.5 px-4 py-2 bg-slate-950/90 border border-slate-800 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-400 text-xs font-semibold rounded-xl uppercase tracking-wider transition-all focus:outline-none cursor-pointer"
           >
             <Copy className="w-3.5 h-3.5" />
             Copy Invite Code
@@ -263,15 +263,15 @@ export const ActiveBattle: React.FC = () => {
       {/* LEFT SIDEBAR: Arena Telemetry & Status Logs */}
       <div className="lg:col-span-1 space-y-6">
         {/* Connection/Users Roster */}
-        <div className="glass-panel p-5 rounded-2xl border border-gray-800">
-          <div className="flex items-center gap-2 text-cyan-400 mb-4 border-b border-gray-800/50 pb-3">
-            <Users className="w-4 h-4" />
+        <div className="glass-panel p-5 rounded-2xl border border-slate-800 shadow-lg">
+          <div className="flex items-center gap-2 text-cyan-400 mb-4 border-b border-slate-800/80 pb-3">
+            <Users className="w-4 h-4 animate-pulse" />
             <h4 className="text-xs font-bold uppercase tracking-widest text-white">Lobby Signal Roster</h4>
           </div>
-          
+
           <div className="space-y-3">
             {/* Host item */}
-            <div className="p-2.5 bg-purple-500/5 border border-purple-500/20 rounded-xl flex items-center gap-3">
+            <div className="p-2.5 bg-purple-500/5 border border-purple-500/20 rounded-xl flex items-center gap-3 shadow-sm shadow-purple-500/5">
               <div className="w-8 h-8 rounded-lg overflow-hidden bg-slate-900 border border-purple-500/30">
                 <img src={getAvatarUrl(room.host?.avatar_seed || 'host')} alt="Host" />
               </div>
@@ -285,23 +285,21 @@ export const ActiveBattle: React.FC = () => {
             {room.users?.filter(u => u.id !== room.host?.id).map((u) => {
               const sub = room.active_round?.submissions.find(s => s.participant.id === u.id);
               const isEliminated = sub?.status === 'eliminated';
-              
+
               return (
-                <div 
+                <div
                   key={u.id}
-                  className={`p-2.5 bg-slate-950/40 border border-gray-900 rounded-xl flex items-center gap-3 justify-between ${
-                    isEliminated ? 'opacity-40 border-red-950' : ''
-                  }`}
+                  className={`p-2.5 bg-slate-950/70 border border-slate-800/80 rounded-xl flex items-center gap-3 justify-between ${isEliminated ? 'opacity-40 border-red-950' : ''
+                    }`}
                 >
                   <div className="flex items-center gap-3 truncate flex-1">
-                    <div className="w-8 h-8 rounded-lg overflow-hidden bg-slate-900 border border-gray-800">
+                    <div className="w-8 h-8 rounded-lg overflow-hidden bg-slate-900 border border-slate-800">
                       <img src={getAvatarUrl(u.avatar_seed)} alt="Contestant" />
                     </div>
                     <div className="truncate flex-1">
                       <span className="block text-xs font-bold text-white truncate">{u.username}</span>
-                      <span className={`text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 mt-0.5 ${
-                        isEliminated ? 'text-red-500' : 'text-cyan-400'
-                      }`}>
+                      <span className={`text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 mt-0.5 ${isEliminated ? 'text-red-500' : 'text-cyan-400'
+                        }`}>
                         {isEliminated ? 'Eliminated' : sub ? 'Active Sub' : 'Lobby Connected'}
                       </span>
                     </div>
@@ -310,9 +308,9 @@ export const ActiveBattle: React.FC = () => {
                 </div>
               );
             })}
-            
+
             {(!room.users || room.users.filter(u => u.id !== room.host?.id).length === 0) && (
-              <div className="py-6 text-center text-xs text-gray-600">
+              <div className="py-6 text-center text-xs text-slate-500 font-medium">
                 No telemetry signals yet. Waiting for participants...
               </div>
             )}
@@ -320,21 +318,21 @@ export const ActiveBattle: React.FC = () => {
         </div>
 
         {/* Live Terminal Output Console */}
-        <div className="glass-panel p-5 rounded-2xl border border-gray-800 flex flex-col h-[280px]">
-          <div className="flex items-center gap-2 text-purple-400 mb-3 border-b border-gray-800/50 pb-2 shrink-0">
+        <div className="glass-panel p-5 rounded-2xl border border-slate-800 flex flex-col h-[280px] shadow-lg">
+          <div className="flex items-center gap-2 text-purple-400 mb-3 border-b border-slate-800/80 pb-2 shrink-0">
             <Terminal className="w-4 h-4" />
             <h4 className="text-xs font-bold uppercase tracking-widest text-white">Event Log Console</h4>
           </div>
-          
-          <div className="flex-1 overflow-y-auto font-mono text-[10px] text-gray-400 space-y-2 pr-1">
+
+          <div className="flex-1 overflow-y-auto font-mono text-[10px] text-slate-300 space-y-2 pr-1">
             {eventFeed.map((log, i) => (
               <div key={i} className="leading-normal break-all">
-                <span className="text-gray-600">[{new Date().toLocaleTimeString()}]</span>{' '}
+                <span className="text-slate-500">[{new Date().toLocaleTimeString()}]</span>{' '}
                 <span className={
                   log.startsWith('[system]') ? 'text-cyan-400' :
-                  log.startsWith('[host]') ? 'text-purple-400' :
-                  log.startsWith('[completion]') ? 'text-emerald-400' :
-                  log.startsWith('[error]') ? 'text-red-400' : 'text-gray-400'
+                    log.startsWith('[host]') ? 'text-purple-400' :
+                      log.startsWith('[completion]') ? 'text-emerald-400' :
+                        log.startsWith('[error]') ? 'text-red-400' : 'text-slate-300'
                 }>{log}</span>
               </div>
             ))}
@@ -345,11 +343,11 @@ export const ActiveBattle: React.FC = () => {
 
       {/* MIDDLE CONTAINER: Core Battle Controls & Active Submission Arena */}
       <div className="lg:col-span-3 space-y-6">
-        
+
         {/* Core Arena Lobbies Controls */}
-        <div className="glass-panel p-6 rounded-2xl border border-gray-800 relative overflow-hidden">
+        <div className="glass-panel p-6 rounded-2xl border border-slate-800 relative overflow-hidden shadow-lg">
           <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-purple-500 to-cyan-500" />
-          
+
           {/* LOBBY WAITING FOR ROUND */}
           {(!room.active_round || room.active_round.status === 'completed') && (
             <div className="text-center py-8 max-w-xl mx-auto">
@@ -357,8 +355,8 @@ export const ActiveBattle: React.FC = () => {
               <h3 className="text-xl font-bold text-white tracking-wide">
                 {room.active_round?.status === 'completed' ? 'Round Finalized!' : 'Arena Awaiting Setup'}
               </h3>
-              <p className="text-xs text-gray-400 mt-2 leading-relaxed">
-                {room.active_round?.status === 'completed' 
+              <p className="text-xs text-slate-350 mt-2 leading-relaxed">
+                {room.active_round?.status === 'completed'
                   ? 'All scores for the previous round are committed in SQLite. Host can initiate a brand new round.'
                   : 'Welcome to the creative battle lobby! The arena director is currently compiling the sensory campaign goals.'}
               </p>
@@ -367,7 +365,7 @@ export const ActiveBattle: React.FC = () => {
                 <div className="mt-8 space-y-4">
                   <div className="flex items-center gap-2 justify-center mb-2">
                     <Sparkles className="w-4 h-4 text-cyan-400" />
-                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Select Director Preset Challenge</span>
+                    <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">Select Director Preset Challenge</span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -375,7 +373,7 @@ export const ActiveBattle: React.FC = () => {
                       <button
                         key={idx}
                         onClick={() => setCustomTheme(preset)}
-                        className="p-3 bg-slate-950/40 border border-gray-800 hover:border-purple-500/40 rounded-xl text-left text-xs text-gray-400 hover:text-gray-200 transition-all focus:outline-none"
+                        className="p-3 bg-slate-950/70 border border-slate-800 hover:border-purple-500/40 rounded-xl text-left text-xs text-slate-300 hover:text-white transition-all focus:outline-none cursor-pointer"
                       >
                         {preset}
                       </button>
@@ -388,7 +386,7 @@ export const ActiveBattle: React.FC = () => {
                       placeholder="Or craft your custom campaign theme..."
                       value={customTheme}
                       onChange={(e) => setCustomTheme(e.target.value)}
-                      className="flex-1 bg-slate-950/70 border border-gray-800 rounded-xl px-4 py-3 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-purple-500/80 transition-all"
+                      className="flex-1 bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-purple-500/80 transition-all font-medium"
                     />
                     <button
                       onClick={() => {
@@ -396,7 +394,7 @@ export const ActiveBattle: React.FC = () => {
                         startRound(customTheme);
                         setCustomTheme('');
                       }}
-                      className="flex items-center gap-1.5 px-5 py-3 bg-purple-500 hover:bg-purple-400 text-slate-950 font-bold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_12px_rgba(168,85,247,0.2)] focus:outline-none shrink-0"
+                      className="flex items-center gap-1.5 px-5 py-3 bg-purple-500 hover:bg-purple-400 text-slate-950 font-bold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_12px_rgba(168,85,247,0.2)] focus:outline-none shrink-0 cursor-pointer active:scale-[0.98]"
                     >
                       <Play className="w-4 h-4" />
                       Ignite Arena
@@ -405,7 +403,7 @@ export const ActiveBattle: React.FC = () => {
                 </div>
               ) : (
                 <div className="mt-8 flex justify-center">
-                  <div className="flex items-center gap-3 px-5 py-3 bg-slate-950/60 border border-gray-900 rounded-2xl">
+                  <div className="flex items-center gap-3 px-5 py-3 bg-slate-950/60 border border-slate-800 rounded-2xl shadow-md">
                     <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin shrink-0" />
                     <span className="text-xs text-cyan-400 font-bold uppercase tracking-wider animate-pulse">
                       Awaiting Director Launchpad Signals...
@@ -419,7 +417,7 @@ export const ActiveBattle: React.FC = () => {
           {/* ACTIVE ROUND INTERFACES */}
           {room.active_round && room.active_round.status !== 'completed' && (
             <div>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-800/50 pb-4 mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-4 mb-6">
                 <div>
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest bg-cyan-400/10 border border-cyan-400/20 text-cyan-400 mb-2">
                     ACTIVE ROUND {room.active_round.round_number}
@@ -430,8 +428,8 @@ export const ActiveBattle: React.FC = () => {
                 </div>
 
                 <div className="shrink-0 flex items-center gap-2">
-                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Lobby State:</span>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider bg-slate-900 border border-gray-800 text-white">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Lobby State:</span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider bg-slate-900 border border-slate-800 text-white">
                     {room.active_round.status === 'accepting_submissions' ? 'Accepting Entries' : 'Evaluating Scores'}
                   </span>
                 </div>
@@ -442,7 +440,7 @@ export const ActiveBattle: React.FC = () => {
                 <div className="p-4 bg-purple-500/5 border border-purple-500/15 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-4">
                   <div className="text-left">
                     <span className="block text-xs font-bold text-white">Director Battle Control Center</span>
-                    <span className="text-[10px] text-gray-400 mt-1 block">
+                    <span className="text-[10px] text-slate-350 mt-1 block">
                       Wait for contestant prompts, watch queue telemetries, and lock entries to score.
                     </span>
                   </div>
@@ -451,7 +449,7 @@ export const ActiveBattle: React.FC = () => {
                     {room.active_round.status === 'accepting_submissions' ? (
                       <button
                         onClick={lockSubmissions}
-                        className="flex items-center gap-1.5 px-5 py-2.5 bg-purple-500 hover:bg-purple-400 text-slate-950 font-bold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_12px_rgba(168,85,247,0.2)] focus:outline-none"
+                        className="flex items-center gap-1.5 px-5 py-2.5 bg-purple-500 hover:bg-purple-400 text-slate-950 font-bold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_12px_rgba(168,85,247,0.2)] focus:outline-none cursor-pointer active:scale-[0.98]"
                       >
                         <ShieldAlert className="w-4 h-4" />
                         Lock Entries & Grade
@@ -459,7 +457,7 @@ export const ActiveBattle: React.FC = () => {
                     ) : (
                       <button
                         onClick={completeRound}
-                        className="flex items-center gap-1.5 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_12px_rgba(16,185,129,0.2)] focus:outline-none"
+                        className="flex items-center gap-1.5 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_12px_rgba(16,185,129,0.2)] focus:outline-none cursor-pointer active:scale-[0.98]"
                       >
                         <Check className="w-4 h-4" />
                         Commit Scores & Next
@@ -468,7 +466,7 @@ export const ActiveBattle: React.FC = () => {
 
                     <button
                       onClick={endBattle}
-                      className="px-4 py-2.5 border border-gray-800 hover:border-red-500/40 text-gray-400 hover:text-red-400 font-bold uppercase text-xs tracking-wider rounded-xl transition-all focus:outline-none"
+                      className="px-4 py-2.5 border border-slate-800 hover:border-red-500/40 text-slate-300 hover:text-red-400 font-bold uppercase text-xs tracking-wider rounded-xl transition-all focus:outline-none cursor-pointer"
                     >
                       End Battle
                     </button>
@@ -492,7 +490,7 @@ export const ActiveBattle: React.FC = () => {
                           className="space-y-4"
                         >
                           <div>
-                            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
                               Your Creative Prompt Submission
                             </label>
                             <textarea
@@ -501,17 +499,17 @@ export const ActiveBattle: React.FC = () => {
                               placeholder="Describe your design (e.g. wet asphalt scent with neon tritium liquid, and top notes of ozone and metallic jasmine...)"
                               value={promptInput}
                               onChange={(e) => setPromptInput(e.target.value)}
-                              className="w-full bg-slate-950/70 border border-gray-800 rounded-xl px-4 py-3 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/80 transition-all leading-relaxed"
+                              className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/80 transition-all leading-relaxed font-medium"
                             />
                           </div>
 
                           <div className="flex justify-between items-center">
-                            <span className="text-[10px] text-gray-500">
+                            <span className="text-[10px] text-slate-400">
                               Write context-aware copy keywords to blend in our AI rendering engine.
                             </span>
                             <button
                               type="submit"
-                              className="flex items-center gap-1.5 px-6 py-3 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_12px_rgba(34,211,238,0.2)] focus:outline-none shrink-0"
+                              className="flex items-center gap-1.5 px-6 py-3 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_12px_rgba(34,211,238,0.2)] focus:outline-none shrink-0 cursor-pointer active:scale-[0.98]"
                             >
                               <Send className="w-4 h-4" />
                               Inject Prompt
@@ -519,17 +517,17 @@ export const ActiveBattle: React.FC = () => {
                           </div>
                         </form>
                       ) : (
-                        <div className="p-6 bg-slate-950/40 border border-gray-900 rounded-xl text-center space-y-3">
+                        <div className="p-6 bg-slate-950/60 border border-slate-800/80 rounded-xl text-center space-y-3 shadow-md">
                           <div className="inline-flex p-3 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-full">
                             <Send className="w-6 h-6 animate-pulse" />
                           </div>
                           <h4 className="text-sm font-bold text-white">Lobby Prompt Injected!</h4>
-                          <p className="text-xs text-gray-500 leading-relaxed max-w-md mx-auto">
-                            Your prompt: <em className="text-gray-300">"{currentParticipantSubmission?.user_prompt}"</em> is safely written to SQLite. Watch the AI queue matrix below!
+                          <p className="text-xs text-slate-350 leading-relaxed max-w-md mx-auto">
+                            Your prompt: <em className="text-slate-200">"{currentParticipantSubmission?.user_prompt}"</em> is safely written to SQLite. Watch the AI queue matrix below!
                           </p>
 
                           <div className="pt-2 flex justify-center gap-2">
-                            <span className="text-xs text-gray-400 font-semibold">Active Queue Telemetry:</span>
+                            <span className="text-xs text-slate-300 font-semibold">Active Queue Telemetry:</span>
                             <JobStatusBadge status={currentParticipantSubmission?.job?.status || 'queued'} />
                           </div>
                         </div>
@@ -538,10 +536,10 @@ export const ActiveBattle: React.FC = () => {
                   )}
 
                   {room.active_round.status === 'evaluating' && (
-                    <div className="p-6 bg-slate-950/40 border border-gray-900 rounded-xl text-center space-y-2">
+                    <div className="p-6 bg-slate-950/60 border border-slate-800/80 rounded-xl text-center space-y-2 shadow-md">
                       <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                       <h4 className="text-sm font-bold text-white">Director Grading Array...</h4>
-                      <p className="text-xs text-gray-500 max-w-md mx-auto leading-relaxed">
+                      <p className="text-xs text-slate-350 max-w-md mx-auto leading-relaxed">
                         Submissions are locked. The arena host is currently scoring and ranking the active campaign generations. Watch live dashboard updates below!
                       </p>
                     </div>
@@ -564,17 +562,16 @@ export const ActiveBattle: React.FC = () => {
               {room.active_round.submissions.map((sub) => {
                 const subScore = scores[sub.id] ?? sub.score ?? 50;
                 const subRank = ranks[sub.id] ?? sub.rank ?? 1;
-                
+
                 return (
-                  <div 
-                    key={sub.id} 
-                    className={`glass-panel p-5 rounded-2xl border transition-all flex flex-col justify-between relative overflow-hidden ${
-                      sub.status === 'eliminated' 
-                        ? 'border-red-500/20 bg-red-950/5 shadow-2xl opacity-60' 
+                  <div
+                    key={sub.id}
+                    className={`glass-panel p-5 rounded-2xl border transition-all flex flex-col justify-between relative overflow-hidden ${sub.status === 'eliminated'
+                        ? 'border-red-500/20 bg-red-950/5 shadow-2xl opacity-60'
                         : sub.rank === 1 && room.active_round?.status === 'completed'
-                          ? 'border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.08)] bg-yellow-500/5'
-                          : 'border-gray-800/80 hover:border-gray-800'
-                    }`}
+                          ? 'border-yellow-500/35 shadow-[0_0_20px_rgba(234,179,8,0.08)] bg-yellow-500/5'
+                          : 'border-slate-800/80 hover:border-slate-700'
+                      }`}
                   >
                     {/* Elimination banner overlay */}
                     {sub.status === 'eliminated' && (
@@ -585,7 +582,7 @@ export const ActiveBattle: React.FC = () => {
                           {isHost && (
                             <button
                               onClick={() => handleEliminateToggle(sub)}
-                              className="mt-3 px-3 py-1 bg-red-500 text-slate-950 font-bold uppercase text-[9px] rounded-lg tracking-wider focus:outline-none"
+                              className="mt-3 px-3 py-1 bg-red-500 text-slate-950 font-bold uppercase text-[9px] rounded-lg tracking-wider focus:outline-none cursor-pointer"
                             >
                               Reinstate
                             </button>
@@ -604,14 +601,14 @@ export const ActiveBattle: React.FC = () => {
 
                     <div>
                       {/* Contestant details */}
-                      <div className="flex items-center justify-between gap-3 border-b border-gray-800/50 pb-3 mb-4">
+                      <div className="flex items-center justify-between gap-3 border-b border-slate-800/80 pb-3 mb-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-lg overflow-hidden bg-slate-900 border border-gray-800 shrink-0">
+                          <div className="w-9 h-9 rounded-lg overflow-hidden bg-slate-900 border border-slate-800 shrink-0">
                             <img src={getAvatarUrl(sub.participant.avatar_seed)} alt="Contestant" />
                           </div>
                           <div>
                             <span className="block text-xs font-bold text-white leading-normal">{sub.participant.username}</span>
-                            <span className="text-[9px] text-gray-500">Contestant</span>
+                            <span className="text-[9px] text-slate-400">Contestant</span>
                           </div>
                         </div>
 
@@ -620,15 +617,15 @@ export const ActiveBattle: React.FC = () => {
 
                       {/* Prompt */}
                       <div className="mb-4">
-                        <span className="block text-[9px] text-gray-500 font-bold uppercase tracking-wider mb-1">RAW PROMPT INPUT</span>
-                        <p className="text-xs text-gray-400 bg-slate-950/50 p-2.5 rounded-xl border border-gray-900 leading-normal italic">
+                        <span className="block text-[9px] text-slate-450 font-bold uppercase tracking-wider mb-1">RAW PROMPT INPUT</span>
+                        <p className="text-xs text-slate-300 bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/80 leading-normal italic">
                           "{sub.user_prompt}"
                         </p>
                       </div>
 
                       {/* JOB PENDING loaders */}
                       {sub.job && sub.job.status !== 'completed' && sub.job.status !== 'failed' && (
-                        <div className="py-8 text-center space-y-3 bg-slate-950/20 border border-gray-900/50 rounded-xl">
+                        <div className="py-8 text-center space-y-3 bg-slate-950/20 border border-slate-850/60 rounded-xl">
                           <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto" />
                           <span className="block text-[10px] text-purple-400 font-bold uppercase tracking-widest animate-pulse">
                             AI QUEUE Matrix Render Active...
@@ -649,11 +646,10 @@ export const ActiveBattle: React.FC = () => {
                           <div className="pt-1 flex gap-2">
                             <button
                               onClick={() => {
-                                // Simple interactive retry handler
                                 submitPrompt(sub.user_prompt);
                                 setToast("Re-queueing prompt to bypass simulated network glitches!", "info");
                               }}
-                              className="px-2.5 py-1 bg-red-500 text-slate-950 font-bold uppercase text-[9px] rounded-lg tracking-wider focus:outline-none"
+                              className="px-2.5 py-1 bg-red-500 text-slate-950 font-bold uppercase text-[9px] rounded-lg tracking-wider focus:outline-none cursor-pointer"
                             >
                               Retry Telemetry
                             </button>
@@ -664,32 +660,32 @@ export const ActiveBattle: React.FC = () => {
                       {/* AI CAMPAIGN GENERATION OUTPUT PANEL */}
                       {sub.generated_content && sub.job?.status === 'completed' && (
                         <div className="space-y-4">
-                          <div className="p-4 bg-slate-950/70 border border-gray-900 rounded-xl space-y-3">
-                            <div className="flex items-center justify-between gap-2 border-b border-gray-800/40 pb-2">
+                          <div className="p-4 bg-slate-950/70 border border-slate-800 rounded-xl space-y-3">
+                            <div className="flex items-center justify-between gap-2 border-b border-slate-800/50 pb-2">
                               <span className="text-xs font-bold text-cyan-400 uppercase tracking-widest truncate">
                                 🚀 {sub.generated_content.campaign_name}
                               </span>
-                              <span className="text-[9px] text-gray-500 uppercase tracking-wider font-bold">
+                              <span className="text-[9px] text-slate-400 uppercase tracking-wider font-bold">
                                 LUXURY AI DIRECTORY
                               </span>
                             </div>
 
                             <div>
-                              <span className="block text-[9px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Tagline</span>
+                              <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Tagline</span>
                               <p className="text-xs text-gray-200 font-bold italic leading-normal">
                                 "{sub.generated_content.tagline}"
                               </p>
                             </div>
 
                             <div>
-                              <span className="block text-[9px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Marketing Pitch</span>
-                              <p className="text-xs text-gray-400 leading-relaxed">
+                              <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Marketing Pitch</span>
+                              <p className="text-xs text-slate-350 leading-relaxed">
                                 {sub.generated_content.description}
                               </p>
                             </div>
 
                             <div>
-                              <span className="block text-[9px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Olfactory Profile</span>
+                              <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Olfactory Profile</span>
                               <p className="text-[10px] text-cyan-300/80 leading-normal font-mono bg-cyan-950/20 p-2 border border-cyan-500/10 rounded-lg">
                                 {sub.generated_content.sensory_notes}
                               </p>
@@ -698,10 +694,10 @@ export const ActiveBattle: React.FC = () => {
 
                           {/* Render sensory visual octagon mock */}
                           {sub.image_url && (
-                            <div className="p-3 bg-slate-950/30 border border-gray-900 rounded-xl flex flex-col gap-2">
-                              <span className="block text-[9px] text-gray-500 font-bold uppercase tracking-wider">AI Announcer Commentary</span>
-                              <p className="text-[10px] text-gray-400 leading-normal">
-                                📣 <em className="text-gray-300">"Sensory campaign '{sub.generated_content.campaign_name}' presents a highly detailed render visual describing: '{sub.image_url}'"</em>
+                            <div className="p-3 bg-slate-950/30 border border-slate-800/80 rounded-xl flex flex-col gap-2">
+                              <span className="block text-[9px] text-slate-450 font-bold uppercase tracking-wider">AI Announcer Commentary</span>
+                              <p className="text-[10px] text-slate-350 leading-normal">
+                                📣 <em className="text-slate-200">"Sensory campaign '{sub.generated_content.campaign_name}' presents a highly detailed render visual describing: '{sub.image_url}'"</em>
                               </p>
                             </div>
                           )}
@@ -711,14 +707,14 @@ export const ActiveBattle: React.FC = () => {
 
                     {/* JUDGING SCORE PANEL */}
                     {sub.job?.status === 'completed' && (
-                      <div className="border-t border-gray-800/50 pt-4 mt-4">
+                      <div className="border-t border-slate-800/80 pt-4 mt-4">
                         {/* Display existing scores if round complete or active evaluation */}
                         {(room.active_round?.status === 'evaluating' || room.active_round?.status === 'completed') && (
                           <div>
                             {isHost && room.active_round?.status === 'evaluating' ? (
                               <div className="space-y-4">
                                 <div className="flex justify-between items-center">
-                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                                     Grade Score:
                                   </span>
                                   <span className="text-sm font-bold text-purple-400 font-mono bg-purple-500/10 px-2 py-0.5 border border-purple-500/20 rounded-lg">
@@ -731,22 +727,21 @@ export const ActiveBattle: React.FC = () => {
                                   max={100}
                                   value={subScore}
                                   onChange={(e) => handleScoreChange(sub.id, parseInt(e.target.value))}
-                                  className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                                  className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-500"
                                 />
 
                                 <div className="flex gap-2 items-center">
                                   {/* Rank selectors */}
-                                  <div className="flex-1 flex gap-1 bg-slate-950 border border-gray-900 p-1 rounded-lg">
+                                  <div className="flex-1 flex gap-1 bg-slate-950 border border-slate-800 p-1 rounded-lg">
                                     {[1, 2, 3].map((r) => (
                                       <button
                                         key={r}
                                         type="button"
                                         onClick={() => handleRankChange(sub.id, r)}
-                                        className={`flex-1 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-all focus:outline-none ${
-                                          subRank === r 
-                                            ? 'bg-purple-500 text-slate-950 shadow-[0_0_8px_rgba(168,85,247,0.3)]' 
-                                            : 'text-gray-500 hover:text-gray-300'
-                                        }`}
+                                        className={`flex-1 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-all focus:outline-none cursor-pointer ${subRank === r
+                                            ? 'bg-purple-500 text-slate-950 shadow-[0_0_8px_rgba(168,85,247,0.3)]'
+                                            : 'text-slate-500 hover:text-slate-350'
+                                          }`}
                                       >
                                         Rank {r}
                                       </button>
@@ -755,7 +750,7 @@ export const ActiveBattle: React.FC = () => {
 
                                   <button
                                     onClick={() => handlePublishScore(sub)}
-                                    className="px-3 py-2 bg-purple-500 hover:bg-purple-400 text-slate-950 font-bold uppercase text-[10px] rounded-lg tracking-wider focus:outline-none shadow-lg shadow-purple-500/10 shrink-0"
+                                    className="px-3 py-2 bg-purple-500 hover:bg-purple-400 text-slate-950 font-bold uppercase text-[10px] rounded-lg tracking-wider focus:outline-none shadow-lg shadow-purple-500/10 shrink-0 cursor-pointer active:scale-[0.98]"
                                   >
                                     Commit
                                   </button>
@@ -763,7 +758,7 @@ export const ActiveBattle: React.FC = () => {
                                   <button
                                     onClick={() => handleEliminateToggle(sub)}
                                     title="Eliminate Contestant"
-                                    className="p-2 border border-gray-900 hover:border-red-500/30 text-gray-500 hover:text-red-400 rounded-lg transition-all focus:outline-none"
+                                    className="p-2 border border-slate-800 hover:border-red-500/50 text-slate-450 hover:text-red-400 rounded-lg transition-all focus:outline-none cursor-pointer"
                                   >
                                     <Skull className="w-4 h-4" />
                                   </button>
@@ -773,7 +768,7 @@ export const ActiveBattle: React.FC = () => {
                               <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-2">
                                   <Award className="w-4 h-4 text-purple-400" />
-                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                                     Score Summary
                                   </span>
                                 </div>
@@ -783,7 +778,7 @@ export const ActiveBattle: React.FC = () => {
                                       Rank #{sub.rank}
                                     </span>
                                   )}
-                                  <span className="px-2.5 py-1 bg-slate-900 border border-gray-800 text-white rounded-lg text-xs font-bold font-mono">
+                                  <span className="px-2.5 py-1 bg-slate-900 border border-slate-800 text-white rounded-lg text-xs font-bold font-mono">
                                     {sub.score !== null ? `${sub.score} pts` : 'Pending Grade'}
                                   </span>
                                 </div>
@@ -799,13 +794,13 @@ export const ActiveBattle: React.FC = () => {
             </div>
           </div>
         )}
-        
+
         {/* EMPTY STATE SHOWCASE */}
         {(!room.active_round || room.active_round.submissions.length === 0) && (
-          <div className="glass-panel py-16 text-center rounded-2xl border border-gray-800">
-            <Trophy className="w-10 h-10 text-gray-700 mx-auto mb-3" />
-            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500">Arena Campaigns Empty</h4>
-            <p className="text-[11px] text-gray-600 max-w-xs mx-auto leading-relaxed mt-1">
+          <div className="glass-panel py-16 text-center rounded-2xl border border-slate-800 shadow-md">
+            <Trophy className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Arena Campaigns Empty</h4>
+            <p className="text-[11px] text-slate-500 max-w-xs mx-auto leading-relaxed mt-1">
               Active campaigns from contestants will stream real-time over the network once round prompts are submitted.
             </p>
           </div>

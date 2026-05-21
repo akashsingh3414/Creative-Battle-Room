@@ -7,8 +7,8 @@ import { Sparkles, Activity, AlertCircle, X, ShieldCheck } from 'lucide-react';
 import './App.css';
 
 function App() {
-  const { 
-    token, user, room, initAuth, toastMessage, clearToast 
+  const {
+    token, user, room, initAuth, toastMessage, clearToast
   } = useBattleStore();
 
   // Restore session on mount
@@ -28,13 +28,13 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#070b13] text-gray-100 flex flex-col font-sans relative overflow-x-hidden select-none selection:bg-purple-500/30 selection:text-white">
-      
+
       {/* Dynamic Ambient Background Glows */}
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[60%] rounded-full bg-purple-950/10 blur-[150px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] rounded-full bg-cyan-950/10 blur-[150px] pointer-events-none" />
-      
+
       {/* Cyber Grid Overlay */}
-      <div 
+      <div
         className="absolute inset-0 pointer-events-none opacity-[0.03]"
         style={{
           backgroundImage: `
@@ -73,9 +73,9 @@ function App() {
             {user && (
               <div className="flex items-center gap-2.5 pl-3 border-l border-gray-900">
                 <div className="w-7 h-7 rounded-lg overflow-hidden bg-slate-900 border border-purple-500/20">
-                  <img 
-                    src={`https://api.dicebear.com/7.x/bottts/svg?seed=${user.avatar_seed}&backgroundColor=0f172a`} 
-                    alt="User" 
+                  <img
+                    src={`https://api.dicebear.com/7.x/bottts/svg?seed=${user.avatar_seed}&backgroundColor=0f172a`}
+                    alt="User"
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -103,20 +103,19 @@ function App() {
       {/* Footer Details */}
       <footer className="w-full bg-[#05080f] py-4 border-t border-gray-900/60 relative z-30 shrink-0 text-center">
         <span className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">
-          Poiro Creative Battle Room — Full-Stack Assignment Suite
+          Poiro Creative Battle Room
         </span>
       </footer>
 
       {/* Real-time Toast Alerts Portal */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-4 duration-300">
-          <div className={`p-4 rounded-xl border backdrop-blur-md shadow-2xl flex items-start gap-3 max-w-sm ${
-            toastMessage.type === 'success' 
+          <div className={`p-4 rounded-xl border backdrop-blur-md shadow-2xl flex items-start gap-3 max-w-sm ${toastMessage.type === 'success'
               ? 'bg-emerald-950/90 border-emerald-500/30 text-emerald-300 shadow-emerald-500/5'
               : toastMessage.type === 'error'
                 ? 'bg-red-950/90 border-red-500/30 text-red-300 shadow-red-500/5'
                 : 'bg-slate-950/90 border-purple-500/30 text-purple-300 shadow-purple-500/5'
-          }`}>
+            }`}>
             <div className="shrink-0 mt-0.5">
               {toastMessage.type === 'success' ? (
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
@@ -126,7 +125,7 @@ function App() {
                 <Activity className="w-4 h-4 text-purple-400" />
               )}
             </div>
-            
+
             <div className="flex-1 text-left">
               <span className="block text-[10px] font-bold uppercase tracking-widest text-white mb-0.5">
                 {toastMessage.type === 'success' ? 'Telemetry Success' : toastMessage.type === 'error' ? 'Security Alert' : 'System Notice'}
@@ -136,7 +135,7 @@ function App() {
               </p>
             </div>
 
-            <button 
+            <button
               onClick={clearToast}
               className="p-1 border border-transparent hover:border-gray-800 hover:text-white rounded-lg transition-all focus:outline-none shrink-0"
             >

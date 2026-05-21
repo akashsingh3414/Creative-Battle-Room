@@ -97,3 +97,17 @@ class RoomEvent(Base):
 
     # Relationships
     room = relationship("Room", back_populates="events")
+
+
+class UserRoomHistory(Base):
+    __tablename__ = "user_room_history"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    room_id = Column(String, ForeignKey("rooms.id"), nullable=False)
+    role = Column(String, nullable=False)  # "host" or "participant"
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+
+    # Relationships
+    room = relationship("Room")
+

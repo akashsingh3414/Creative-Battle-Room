@@ -66,6 +66,7 @@ interface BattleStore {
   wsError: string | null;
   toastMessage: { text: string; type: 'success' | 'error' | 'info' } | null;
   publicRooms: any[];
+  recentRooms: any[];
 
   // Actions
   login: (email: string, password: string) => Promise<boolean>;
@@ -79,7 +80,7 @@ interface BattleStore {
   createRoom: (name: string) => Promise<string | null>;
   getRoomDetails: (room_id: string) => Promise<boolean>;
   fetchPublicRooms: () => Promise<void>;
-  syncRecentRoomsStatus: () => Promise<void>;
+  fetchUserHistory: () => Promise<void>;
   
   // WebSocket Live Actions
   connectRoom: (room_code: string) => void;
@@ -117,6 +118,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
   wsError: null,
   toastMessage: null,
   publicRooms: [],
+  recentRooms: [],
 
   clearToast: () => set({ toastMessage: null }),
   setToast: (text, type = 'info') => set({ toastMessage: { text, type } }),
@@ -275,45 +277,20 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
     }
   },
 
-  syncRecentRoomsStatus: async () => {
-    const { token, user } = get();
-    if (!token || !user) return;
-
-    const recentListKey = `poiro_recent_rooms_${user.id}`;
-    const rawRecent = localStorage.getItem(recentListKey);
-    if (!rawRecent) return;
+  fetchUserHistory: async () => {
+    const { token } = get();
+    if (!token) return;
 
     try {
-      let recentRooms = JSON.parse(rawRecent);
-      let updated = false;
-
-      for (let i = 0; i < recentRooms.length; i++) {
-        const r = recentRooms[i];
-        if (!r.completed) {
-          try {
-            const res = await fetch(`${API_BASE}/api/rooms/${r.code}`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-              const data = await res.json();
-              if (data.status === 'completed') {
-                recentRooms[i].completed = true;
-                updated = true;
-              }
-            }
-          } catch (err) {
-            console.error('Failed to sync room status:', err);
-          }
-        }
-      }
-
-      if (updated) {
-        localStorage.setItem(recentListKey, JSON.stringify(recentRooms));
-        // Force state update to trigger UI re-renders on the homepage
-        set({ publicRooms: [...get().publicRooms] });
+      const res = await fetch(`${API_BASE}/api/users/history`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        set({ recentRooms: data });
       }
     } catch (e) {
-      console.error('Failed parsing recent rooms:', e);
+      console.error('Failed to fetch user history:', e);
     }
   },
 
@@ -356,23 +333,8 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
           // Save active room memory for instant auto-recovery on page refresh
           localStorage.setItem('poiro_active_room_code', payload.room_id);
 
-          // Save to user-specific recent lobbies roster list (Fast Portal Access)
-          const currentUserId = get().user?.id;
-          if (currentUserId) {
-            const key = `poiro_recent_rooms_${currentUserId}`;
-            const existing = localStorage.getItem(key);
-            let list = existing ? JSON.parse(existing) : [];
-            list = list.filter((r: any) => r.code !== payload.room_id);
-            list.unshift({
-              code: payload.room_id,
-              name: payload.room_name,
-              role: payload.user_role,
-              timestamp: Date.now(),
-              completed: payload.room_status === 'completed'
-            });
-            list = list.slice(0, 5);
-            localStorage.setItem(key, JSON.stringify(list));
-          }
+          // Update user history from database to refresh homepage lists dynamically
+          get().fetchUserHistory();
           break;
         }
 
@@ -564,26 +526,8 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
           }));
           get().setToast('The Creative Battle Room session has finished! Long live the champions!', 'success');
           
-          // Mark this room as completed in the local history instead of purging it
-          const currentUserId = get().user?.id;
-          if (currentUserId) {
-            const key = `poiro_recent_rooms_${currentUserId}`;
-            const existing = localStorage.getItem(key);
-            if (existing) {
-              try {
-                let list = JSON.parse(existing);
-                list = list.map((r: any) => {
-                  if (r.code === payload.room_id) {
-                    return { ...r, completed: true };
-                  }
-                  return r;
-                });
-                localStorage.setItem(key, JSON.stringify(list));
-              } catch (e) {
-                console.error('Failed to update recent rooms to completed:', e);
-              }
-            }
-          }
+          // Update user history from database so that the room status is updated dynamically
+          get().fetchUserHistory();
           break;
         }
 

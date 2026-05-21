@@ -8,12 +8,15 @@ export const CreateJoinRoom: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { user, createRoom, connectRoom, logout, setToast, publicRooms, fetchPublicRooms, syncRecentRoomsStatus } = useBattleStore();
+  const { user, createRoom, connectRoom, logout, setToast, publicRooms, fetchPublicRooms, recentRooms, fetchUserHistory } = useBattleStore();
 
   useEffect(() => {
     fetchPublicRooms();
-    syncRecentRoomsStatus();
-    const interval = setInterval(fetchPublicRooms, 3000);
+    fetchUserHistory();
+    const interval = setInterval(() => {
+      fetchPublicRooms();
+      fetchUserHistory();
+    }, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -75,7 +78,7 @@ export const CreateJoinRoom: React.FC = () => {
       
       {/* Col 1: Profile Display & Lobby Action Logs */}
       <div className="md:col-span-1 space-y-6">
-        <div className="glass-panel p-6 rounded-2xl border border-gray-800 flex flex-col items-center text-center relative overflow-hidden">
+        <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex flex-col items-center text-center relative overflow-hidden">
           <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-purple-500 to-cyan-500" />
           
           <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-900 border border-purple-500/30 p-1 mb-4 shadow-lg shadow-purple-500/10">
@@ -84,11 +87,11 @@ export const CreateJoinRoom: React.FC = () => {
 
           <h3 className="text-lg font-bold text-white tracking-wide">{user?.username}</h3>
           <span className="text-[10px] text-purple-400 font-bold uppercase tracking-widest mt-0.5">Arena Competitor</span>
-          <p className="text-xs text-gray-500 mt-2 truncate w-full">{user?.email}</p>
+          <p className="text-xs text-slate-400 mt-2 truncate w-full">{user?.email}</p>
 
           <button
             onClick={logout}
-            className="mt-6 flex items-center gap-2 px-4 py-2 border border-gray-800 hover:border-red-500/30 text-gray-400 hover:text-red-400 text-xs font-semibold rounded-xl uppercase tracking-wider transition-all focus:outline-none"
+            className="mt-6 flex items-center gap-2 px-4 py-2 bg-slate-950/25 border border-slate-850 hover:border-red-500/50 text-slate-300 hover:text-red-400 text-xs font-semibold rounded-xl uppercase tracking-wider transition-all focus:outline-none"
           >
             <LogOut className="w-3.5 h-3.5" />
             Disconnect Net
@@ -96,7 +99,7 @@ export const CreateJoinRoom: React.FC = () => {
         </div>
 
         {/* Gallery of inspiration challenges */}
-        <div className="glass-panel p-6 rounded-2xl border border-gray-800">
+        <div className="glass-panel p-6 rounded-2xl border border-slate-800">
           <div className="flex items-center gap-2 text-purple-400 mb-4">
             <Sparkles className="w-4 h-4" />
             <h4 className="text-xs font-bold uppercase tracking-widest text-white">Theme Generator Feed</h4>
@@ -109,9 +112,9 @@ export const CreateJoinRoom: React.FC = () => {
                   setRoomName(theme);
                   setToast("Theme copied to generator dashboard!", "success");
                 }}
-                className="p-3 bg-slate-950/40 border border-gray-900 hover:border-purple-500/20 rounded-xl text-left cursor-pointer transition-all hover:bg-slate-950/70 group"
+                className="p-3 bg-slate-950/60 border border-slate-800/80 hover:border-purple-500/40 rounded-xl text-left cursor-pointer transition-all hover:bg-slate-950/80 group"
               >
-                <p className="text-xs text-gray-400 leading-relaxed group-hover:text-gray-200">
+                <p className="text-xs text-slate-300 leading-relaxed group-hover:text-white">
                   {theme}
                 </p>
               </div>
@@ -130,14 +133,14 @@ export const CreateJoinRoom: React.FC = () => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Create Lobbby Card */}
-          <div className="glass-panel p-6 rounded-2xl border border-gray-800 flex flex-col justify-between">
+          {/* Create Lobby Card */}
+          <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex flex-col justify-between hover:border-purple-500/20 transition-all">
             <div>
               <div className="flex items-center gap-2 text-purple-400 mb-4">
                 <PlusCircle className="w-5 h-5" />
                 <h4 className="text-xs font-bold uppercase tracking-widest text-white">Create Battle Arena</h4>
               </div>
-              <p className="text-xs text-gray-400 mb-6 leading-relaxed">
+              <p className="text-xs text-slate-300 mb-6 leading-relaxed">
                 Form a stateful creative lobby, claim your Host privilege, customize the round guidelines, and score participants.
               </p>
             </div>
@@ -150,13 +153,13 @@ export const CreateJoinRoom: React.FC = () => {
                   placeholder="e.g. Insane Cyberpunk Campaigns"
                   value={roomName}
                   onChange={(e) => setRoomName(e.target.value)}
-                  className="w-full bg-slate-950/70 border border-gray-800 rounded-xl px-4 py-3 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-purple-500/80 transition-all"
+                  className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-purple-500/80 transition-all font-medium"
                 />
               </div>
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-purple-500 hover:bg-purple-400 text-slate-950 font-bold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_12px_rgba(168,85,247,0.2)] disabled:opacity-50"
+                className="w-full py-3 bg-purple-500 hover:bg-purple-400 text-slate-950 font-bold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_12px_rgba(168,85,247,0.2)] disabled:opacity-50 cursor-pointer active:scale-[0.99]"
               >
                 {loading ? 'Initializing net...' : 'Establish Arena'}
               </button>
@@ -164,13 +167,13 @@ export const CreateJoinRoom: React.FC = () => {
           </div>
 
           {/* Join Lobby Card */}
-          <div className="glass-panel p-6 rounded-2xl border border-gray-800 flex flex-col justify-between">
+          <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex flex-col justify-between hover:border-cyan-500/20 transition-all">
             <div>
               <div className="flex items-center gap-2 text-cyan-400 mb-4">
                 <Link className="w-5 h-5" />
                 <h4 className="text-xs font-bold uppercase tracking-widest text-white">Infiltrate Lobby Code</h4>
               </div>
-              <p className="text-xs text-gray-400 mb-6 leading-relaxed">
+              <p className="text-xs text-slate-300 mb-6 leading-relaxed">
                 Connect directly into an active server. Submit creative text prompts, trigger background AI workers, and dominate the ranks.
               </p>
             </div>
@@ -181,16 +184,16 @@ export const CreateJoinRoom: React.FC = () => {
                   type="text"
                   required
                   maxLength={5}
-                  placeholder="Enter 5-Letter Code (e.g. YL4AV)"
+                  placeholder="Enter 5-Letter Code"
                   value={roomCode}
                   onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                  className="w-full bg-slate-950/70 border border-gray-800 rounded-xl px-4 py-3 text-xs text-white text-center font-bold tracking-widest placeholder-gray-600 focus:outline-none focus:border-cyan-500/80 transition-all"
+                  className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white text-center font-bold tracking-widest placeholder-slate-600 focus:outline-none focus:border-cyan-500/80 transition-all"
                 />
               </div>
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_12px_rgba(34,211,238,0.2)] disabled:opacity-50"
+                className="w-full py-3 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold uppercase text-xs tracking-wider rounded-xl transition-all shadow-[0_0_12px_rgba(34,211,238,0.2)] disabled:opacity-50 cursor-pointer active:scale-[0.99]"
               >
                 {loading ? 'Decrypting net...' : 'Connect to Code'}
               </button>
@@ -200,39 +203,35 @@ export const CreateJoinRoom: React.FC = () => {
 
         {/* Recent Arenas Quick Access Grid (Fast Portal Access) */}
         {(() => {
-          const recentListKey = `poiro_recent_rooms_${user?.id}`;
-          const rawRecent = localStorage.getItem(recentListKey);
-          const recentRooms = rawRecent ? JSON.parse(rawRecent) : [];
-
           const activeRooms = recentRooms.filter((r: any) => !r.completed);
           const completedRooms = recentRooms.filter((r: any) => r.completed);
 
           return (
             <div className="space-y-6">
               {/* Active Portal Access History */}
-              <div className="glass-panel p-6 rounded-2xl border border-gray-800 space-y-4">
-                <div className="flex items-center gap-2 text-cyan-400 border-b border-gray-800 pb-2">
-                  <Terminal className="w-4 h-4 text-purple-400" />
+              <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4 shadow-lg shadow-black/25">
+                <div className="flex items-center gap-2 text-cyan-400 border-b border-slate-800 pb-2">
+                  <Terminal className="w-4 h-4 text-purple-400 animate-pulse" />
                   <h4 className="text-xs font-bold uppercase tracking-widest text-white">Active Portal Access History</h4>
                 </div>
                 
                 <div className="max-h-[220px] overflow-y-auto pr-1 space-y-3 custom-scrollbar">
                   {activeRooms.length === 0 ? (
-                    <div className="py-8 text-center text-xs text-gray-600">
+                    <div className="py-8 text-center text-xs text-slate-500 font-medium">
                       No active portal signals detected. Create or decrypt an arena above to begin!
                     </div>
                   ) : (
                     activeRooms.map((r: any) => (
                       <div 
                         key={r.code}
-                        className="p-3 bg-slate-950/60 border border-gray-900 hover:border-purple-500/30 rounded-xl flex items-center justify-between gap-4 transition-all group hover:bg-slate-950/80"
+                        className="p-3 bg-slate-950/60 border border-slate-800 hover:border-purple-500/40 rounded-xl flex items-center justify-between gap-4 transition-all group hover:bg-slate-950/90"
                       >
                         <div className="truncate flex-1">
                           <span className="block text-xs font-bold text-white truncate leading-normal">
                             {r.name}
                           </span>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-slate-900 text-gray-400 border border-gray-800">
+                            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-slate-900 text-slate-300 border border-slate-800">
                               Code: {r.code}
                             </span>
                             <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${
@@ -249,7 +248,7 @@ export const CreateJoinRoom: React.FC = () => {
                             setToast(`Connecting back to Arena lobby: ${r.code}...`, 'success');
                           }}
                           disabled={loading}
-                          className="px-3.5 py-2 bg-purple-500/10 hover:bg-purple-500 text-purple-400 hover:text-slate-950 border border-purple-500/30 hover:border-transparent rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all focus:outline-none shrink-0"
+                          className="px-3.5 py-2 bg-purple-500/10 hover:bg-purple-500 text-purple-400 hover:text-slate-950 border border-purple-500/30 hover:border-transparent rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all focus:outline-none shrink-0 cursor-pointer"
                         >
                           Re-Connect
                         </button>
@@ -260,29 +259,29 @@ export const CreateJoinRoom: React.FC = () => {
               </div>
 
               {/* Completed Arena Triumphs */}
-              <div className="glass-panel p-6 rounded-2xl border border-gray-800 space-y-4">
-                <div className="flex items-center gap-2 text-yellow-400 border-b border-gray-800 pb-2">
-                  <Sparkles className="w-4 h-4 text-yellow-400 animate-pulse" />
+              <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4 shadow-lg shadow-black/25">
+                <div className="flex items-center gap-2 text-yellow-400 border-b border-slate-800 pb-2">
+                  <Sparkles className="w-4 h-4 text-yellow-450 animate-pulse" />
                   <h4 className="text-xs font-bold uppercase tracking-widest text-white">Completed Arena Triumphs</h4>
                 </div>
                 
                 <div className="max-h-[220px] overflow-y-auto pr-1 space-y-3 custom-scrollbar">
                   {completedRooms.length === 0 ? (
-                    <div className="py-8 text-center text-xs text-gray-600">
+                    <div className="py-8 text-center text-xs text-slate-500 font-medium">
                       No finalized battles archived yet. Conclude an active battle to create a monument!
                     </div>
                   ) : (
                     completedRooms.map((r: any) => (
                       <div 
                         key={r.code}
-                        className="p-3 bg-slate-950/40 border border-gray-900/60 rounded-xl flex items-center justify-between gap-4 transition-all group hover:bg-slate-950/60"
+                        className="p-3 bg-slate-950/40 border border-slate-800/80 rounded-xl flex items-center justify-between gap-4 transition-all group hover:bg-slate-950/70"
                       >
                         <div className="truncate flex-1">
-                          <span className="block text-xs font-bold text-gray-400 truncate leading-normal">
+                          <span className="block text-xs font-semibold text-slate-300 truncate leading-normal">
                             {r.name}
                           </span>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-slate-900 text-gray-600 border border-gray-800">
+                            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-slate-900 text-slate-400 border border-slate-800">
                               Code: {r.code}
                             </span>
                             <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-yellow-950/20 text-yellow-500/80 border border-yellow-500/10">
@@ -297,7 +296,7 @@ export const CreateJoinRoom: React.FC = () => {
                             setToast(`Retrieving Concluded Arena Podium: ${r.code}...`, 'success');
                           }}
                           disabled={loading}
-                          className="px-3.5 py-2 bg-yellow-500/10 hover:bg-yellow-500 text-yellow-500 hover:text-slate-950 border border-yellow-500/30 hover:border-transparent rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all focus:outline-none shrink-0"
+                          className="px-3.5 py-2 bg-yellow-500/10 hover:bg-yellow-500 text-yellow-500 hover:text-slate-950 border border-yellow-500/30 hover:border-transparent rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all focus:outline-none shrink-0 cursor-pointer"
                         >
                           View Podium
                         </button>
@@ -312,7 +311,7 @@ export const CreateJoinRoom: React.FC = () => {
 
         {/* Public Active Arenas Listing */}
         {publicRooms && publicRooms.length > 0 && (
-          <div className="glass-panel p-6 rounded-2xl border border-gray-800 space-y-4">
+          <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4 shadow-lg shadow-black/25">
             <div className="flex items-center gap-2 text-cyan-400">
               <Sparkles className="w-4 h-4 text-cyan-400" />
               <h4 className="text-xs font-bold uppercase tracking-widest text-white">Live Public Battle Arenas</h4>
@@ -322,14 +321,14 @@ export const CreateJoinRoom: React.FC = () => {
               {publicRooms.map((r: any) => (
                 <div 
                   key={r.id}
-                  className="p-4 bg-slate-950/60 border border-gray-900 hover:border-cyan-500/30 rounded-xl flex items-center justify-between gap-4 transition-all group hover:bg-slate-950/80"
+                  className="p-4 bg-slate-950/60 border border-slate-800 hover:border-cyan-500/40 rounded-xl flex items-center justify-between gap-4 transition-all group hover:bg-slate-950/85"
                 >
                   <div className="truncate flex-1">
                     <span className="block text-xs font-bold text-white truncate leading-normal">
                       {r.name}
                     </span>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-slate-900 text-gray-400 border border-gray-800">
+                      <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-slate-900 text-slate-300 border border-slate-800">
                         Code: {r.id}
                       </span>
                       <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-purple-950/50 text-purple-400 border border-purple-500/10">
@@ -344,7 +343,7 @@ export const CreateJoinRoom: React.FC = () => {
                       setToast(`Infiltrating Arena lobby: ${r.id}...`, 'success');
                     }}
                     disabled={loading}
-                    className="px-3.5 py-2 bg-cyan-400/10 hover:bg-cyan-400 text-cyan-400 hover:text-slate-950 border border-cyan-400/30 hover:border-transparent rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all focus:outline-none shrink-0"
+                    className="px-3.5 py-2 bg-cyan-400/10 hover:bg-cyan-400 text-cyan-400 hover:text-slate-950 border border-cyan-400/30 hover:border-transparent rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all focus:outline-none shrink-0 cursor-pointer"
                   >
                     Join Arena
                   </button>

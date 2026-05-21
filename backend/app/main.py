@@ -177,6 +177,8 @@ def create_new_room(
     current_user: models.User = Depends(security.get_current_user)
 ):
     room = crud.create_room(db, room_schema.name, current_user.id)
+    # Persist room history record for the host instantly in SQLite
+    crud.add_room_history(db, current_user.id, room.id, "host")
     return room
 
 @app.get("/api/rooms/{room_id}", response_model=schemas.RoomOut)
@@ -192,6 +194,25 @@ def get_room_details(room_id: str, db: Session = Depends(get_db), current_user: 
 @app.get("/api/rooms", response_model=List[schemas.RoomOut])
 def get_all_active_rooms(db: Session = Depends(get_db), current_user: models.User = Depends(security.get_current_user)):
     return db.query(models.Room).filter(models.Room.status != "completed").order_by(models.Room.created_at.desc()).all()
+
+@app.get("/api/users/history", response_model=List[schemas.RoomHistoryOut])
+def get_user_room_history(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(security.get_current_user)
+):
+    histories = crud.get_user_history(db, current_user.id)
+    result = []
+    for h in histories:
+        if h.room:
+            result.append({
+                "code": h.room_id,
+                "name": h.room.name,
+                "role": h.role,
+                "timestamp": int(h.timestamp.timestamp() * 1000),
+                "completed": h.room.status == "completed"
+            })
+    return result
+
 
 
 # ==========================================
@@ -229,12 +250,15 @@ async def websocket_endpoint(websocket: WebSocket, room_code: str, token: str | 
         return
 
     # 4. Accept connection and group in ConnectionManager
+    role = "host" if user.id == room.host_id else "participant"
     user_info = {
         "id": user.id,
         "username": user.username,
         "avatar_seed": user.avatar_seed,
-        "role": "host" if user.id == room.host_id else "participant"
+        "role": role
     }
+    # Persist the connection history for this user in SQLite
+    crud.add_room_history(db, user.id, room.id, role)
     await manager.connect(room_code, websocket, user_info)
 
     try:

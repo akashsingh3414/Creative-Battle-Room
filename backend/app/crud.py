@@ -125,3 +125,33 @@ def create_room_event(db: Session, room_id: str, event_type: str, payload_data: 
     db.commit()
     db.refresh(db_event)
     return db_event
+
+def add_room_history(db: Session, user_id: str, room_id: str, role: str) -> models.UserRoomHistory:
+    existing = db.query(models.UserRoomHistory).filter(
+        models.UserRoomHistory.user_id == user_id,
+        models.UserRoomHistory.room_id == room_id
+    ).first()
+    if existing:
+        # If user was a participant, but somehow logged as host (or vice-versa), maintain high privilege (host)
+        if existing.role != "host" and role == "host":
+            existing.role = "host"
+        existing.timestamp = datetime.datetime.utcnow()
+        db.commit()
+        db.refresh(existing)
+        return existing
+        
+    db_history = models.UserRoomHistory(
+        user_id=user_id,
+        room_id=room_id,
+        role=role
+    )
+    db.add(db_history)
+    db.commit()
+    db.refresh(db_history)
+    return db_history
+
+def get_user_history(db: Session, user_id: str) -> list[models.UserRoomHistory]:
+    return db.query(models.UserRoomHistory).filter(
+        models.UserRoomHistory.user_id == user_id
+    ).order_by(models.UserRoomHistory.timestamp.desc()).limit(15).all()
+

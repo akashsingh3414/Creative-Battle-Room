@@ -113,3 +113,15 @@ class RoomEventOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class RoomHistoryOut(BaseModel):
+    code: str
+    name: str
+    role: str
+    timestamp: int  # JS epoch timestamp in milliseconds
+    completed: bool
+
+    class Config:
+        from_attributes = True
+
