@@ -1,4 +1,4 @@
-# AI Creative Battle Room — Intern Assignment Suite
+# AI Creative Battle Room
 
 Welcome to the **Poiro AI Creative Battle Room**! This is a stateful, real-time multiplayer creative battle arena where users compete in AI-powered copywriting and product design challenges. One host launches the battle rounds while participants submit prompts, which are processed asynchronously through a dedicated background task queue and generated using live LLM APIs.
 
@@ -31,7 +31,14 @@ backend/app/
 │   ├── room_service.py         # RoomService class-based CRUD
 │   ├── round_service.py        # RoundService class-based CRUD
 │   ├── submission_service.py   # SubmissionService class-based CRUD
-│   ├── ai_provider.py          # Groq Llama-3.3, OpenAI GPT-4o-mini, and Gemini
+│   ├── ai/                     # Modular AI service layer using Interface & Orchestrator patterns
+│   │   ├── __init__.py         # Exposes standard singleton orchestrator & custom exceptions
+│   │   ├── base.py             # BaseAIProvider interface and AIProviderError definition
+│   │   ├── groq.py             # Concrete Groq Llama-3.3 integration
+│   │   ├── openai.py           # Concrete OpenAI GPT-4o-mini integration
+│   │   ├── gemini.py           # Concrete Gemini integration
+│   │   ├── mock.py             # Procedural fallback mock generation engine
+│   │   └── orchestrator.py     # AIProviderOrchestrator managing priority-cascading and fallback
 │   └── worker.py               # In-process task queue loop and WS callbacks
 ├── api/                        # HTTP endpoints & WebSocket handlers
 │   ├── auth.py                 # Register, Login, and Me endpoints
@@ -43,6 +50,16 @@ backend/app/
 
 ### Class-Based Service Pattern (OOP)
 All database interactions are organized into cohesive Service classes (e.g., `UserService`, `RoomService`). These classes accept the database `Session` in their constructors (`__init__(self, db: Session)`). This decouples logic from router parameters, making database transactions highly modular and unit testing/mocking extremely straightforward.
+
+### Modular AI Service Layer (Interface & Orchestrator Design)
+To support a robust, multi-provider AI ecosystem with zero-downtime fallback capabilities, the AI service layer is designed using the **Interface** and **Orchestrator** design patterns:
+1. **Interface Contract (`BaseAIProvider`)**: Enforces a uniform, clean asynchronous contract (`generate`) that every concrete AI integration must implement. This promotes loose coupling and enforces the Single Responsibility Principle.
+2. **Concrete Providers**: Highly modular and testable classes wrapped around live AI APIs:
+   - `GroqProvider`: Uses high-speed Llama-3.3 for lightning-fast creative copywriting.
+   - `OpenAIProvider`: Employs GPT-4o-mini for stable, top-tier generation.
+   - `GeminiProvider`: Leverages the official Google Gemini APIs.
+   - `MockProvider`: Serves as a fast, offline procedural copywriting engine for sandbox mode or as a final fallback.
+3. **AI Orchestrator (`AIProviderOrchestrator`)**: Acts as the single central entry point for the background task worker. It handles pre-execution safety filters, honors the global `FORCE_MOCK_AI` toggle, and coordinates the sequential priority-cascading fallback logic across active live providers (Groq ➔ OpenAI ➔ Gemini ➔ Mock).
 
 ---
 
@@ -149,7 +166,7 @@ In this implementation, the host serves as the ultimate creative judge. The host
 
 ## Failure Handling Strategy
 
-1. **AI Failures & Fallbacks**: The `AIProvider` encapsulates OpenAI and Groq APIs inside robust `try-except` wrappers. If live keys are missing or rate-limited, it automatically falls back to an elegant, procedurally generated copywriting system so the battle room experience remains unbroken.
+1. **AI Failures & Fallbacks**: The refactored AI Service Layer encapsulates multiple concrete LLM providers behind a unified `BaseAIProvider` interface. The `AIProviderOrchestrator` runs a structured sequential cascade over these live providers (Groq ➔ OpenAI ➔ Gemini). If a provider's key is missing, or it is rate-limited, or encounters a API/network exception, the orchestrator automatically catches the failure, logs it, and falls back to the next active provider in the cascade. If all configured live providers fail or if `FORCE_MOCK_AI` is enabled, it triggers the procedural `MockProvider` backup so that the creative copywriting and battle room gameplay remain completely uninterrupted.
 2. **Safety Filter Violation**: If a user tries to trigger system failures (e.g. prompt beginning with `"fail"`), the backend intercepts the request and marks the job as `failed` with a readable safety warning on the frontend card.
 3. **Task Timeouts**: Integrated `asyncio.wait_for` set to a hard limit of 30.0 seconds. If an LLM endpoint takes too long, the thread is closed, and the job transitions to `timed_out`.
 4. **WebSocket Recovery**: The React frontend uses an automated network drop listener and custom reconnect retry hooks to re-establish sockets, querying the server for a full `ROOM_STATE` snapshot instantly to resume without losing battle context.
@@ -224,6 +241,8 @@ To host the stateful WebSocket backend and persist the SQLite database, you shou
        *   `DATABASE_URL=sqlite:////app/data/poiro_battle.db`
        *   `FORCE_MOCK_AI=false`
        *   `GROQ_API_KEY=gsk_...`
+       *   `OPENAI_API_KEY=sk-proj-...`
+       *   `GEMINI_API_KEY=AIzaSy...`
        *   `JWT_SECRET=your_production_secret`
     5. Set the Start Command to: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
 
@@ -243,6 +262,8 @@ To host the stateful WebSocket backend and persist the SQLite database, you shou
        *   `DATABASE_URL=sqlite:////data/poiro_battle.db`
        *   `FORCE_MOCK_AI=false`
        *   `GROQ_API_KEY=gsk_...`
+       *   `OPENAI_API_KEY=sk-proj-...`
+       *   `GEMINI_API_KEY=AIzaSy...`
        *   `JWT_SECRET=your_production_secret`
     5. Deploy the application: `fly deploy`. The SQLite database is now safely written to persistent storage, surviving all container restarts and updates.
 
