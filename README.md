@@ -205,3 +205,56 @@ cd backend
 .\venv\Scripts\Activate.ps1
 pytest test_battle.py -v
 ```
+
+---
+
+## Cloud Deployment and Hosting Guide
+
+Since the application features a decoupled architecture (FastAPI backend + React frontend), hosting is split into two parts:
+
+### 1. Hosting the Backend (FastAPI + WebSockets)
+To host the stateful WebSocket backend and persist the SQLite database, you should choose a hosting service that supports persistent block volumes and stateful container environments:
+
+*   **Recommended Services**: **Railway**, **Render** (Web Service), or **Fly.io**.
+*   **Step-by-Step with Railway**:
+    1. Click **New Project** and connect your GitHub repository.
+    2. Choose the `backend` subdirectory.
+    3. Setup a **Persistent Volume** (e.g., Mount Path `/app/data/`) so that the `poiro_battle.db` SQLite file is not wiped on restarts.
+    4. Configure your environment variables in the variables tab:
+       *   `DATABASE_URL=sqlite:////app/data/poiro_battle.db`
+       *   `FORCE_MOCK_AI=false`
+       *   `GROQ_API_KEY=gsk_...`
+       *   `JWT_SECRET=your_production_secret`
+    5. Set the Start Command to: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
+
+*   **Step-by-Step with Fly.io (SQLite Persistence via Volumes)**:
+    1. Initialize the Fly application inside your terminal: `fly launch`.
+    2. Since Fly.io filesystems are ephemeral, **create a persistent 1GB block storage volume** in your target deployment region:
+       ```bash
+       fly volumes create poiro_data --size 1 --region <your-deployment-region>
+       ```
+    3. Open your generated `fly.toml` file and append the `[mounts]` block to mount the volume to a specific container folder (e.g. `/data`):
+       ```toml
+       [[mounts]]
+         source = "poiro_data"
+         destination = "/data"
+       ```
+    4. Set your production environment variables (e.g. via `fly secrets set` or the online dashboard), pointing the database location directly into the persistent mount directory:
+       *   `DATABASE_URL=sqlite:////data/poiro_battle.db`
+       *   `FORCE_MOCK_AI=false`
+       *   `GROQ_API_KEY=gsk_...`
+       *   `JWT_SECRET=your_production_secret`
+    5. Deploy the application: `fly deploy`. The SQLite database is now safely written to persistent storage, surviving all container restarts and updates.
+
+---
+
+### 2. Hosting the Frontend (React + Vite + TypeScript)
+The frontend builds into a highly optimized bundle of static HTML/JS/CSS assets which can be hosted at near-zero cost:
+
+*   **Recommended Services**: **Vercel**, **Netlify**, or **Render** (Static Site).
+*   **Step-by-Step with Vercel**:
+    1. Select **Import Project** and link your repository.
+    2. Choose the `frontend` folder as the root.
+    3. Set the **Build Command** to: `npm run build` and **Output Directory** to `dist`.
+    4. Add environmental overrides if needed (e.g., configuring `VITE_API_URL` and `VITE_WS_URL` to point to your live hosted Railway backend URL instead of `localhost:8000`).
+
