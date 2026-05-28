@@ -38,7 +38,7 @@ function App() {
             </div>
             <div>
               <h1 className="text-base font-extrabold text-white tracking-widest uppercase">
-                POIRO <span className="text-[#ff4500]">CREATIVE</span>
+                PROMPT <span className="text-[#ff4500]">ARENA</span>
               </h1>
               <span className="text-[10px] text-[#8797a1] font-bold uppercase tracking-wider block mt-0.5">
                 AI Battle Arena Console
@@ -87,7 +87,7 @@ function App() {
       {/* Footer Details */}
       <footer className="w-full bg-[#122326] py-2 border-t border-[#2a3c42] relative z-30 shrink-0 text-center">
         <span className="text-[10px] text-[#8797a1] font-bold uppercase tracking-widest">
-          Poiro Creative Battle Room — Dark Edition
+          Prompt Arena — Dark Edition
         </span>
       </footer>
 

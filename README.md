@@ -1,71 +1,46 @@
-# AI Creative Battle Room
+# Prompt Arena
 
-Welcome to the **Poiro AI Creative Battle Room**! This is a stateful, real-time multiplayer creative battle arena where users compete in AI-powered copywriting and product design challenges. One host launches the battle rounds while participants submit prompts, which are processed asynchronously through a dedicated background task queue and generated using live LLM APIs.
-
-The system is designed with a professional, enterprise-grade **Clean Architecture** (featuring domain-specific models, schemas, and class-based services) on the backend and a premium, responsive **React + Vite + TypeScript** dashboard styled with a high-contrast **Modern Dark Theme** on the frontend.
+A stateful, real-time multiplayer creative arena where participants submit prompts that are processed asynchronously through background tasks and generated using LLM APIs. The host evaluates submissions and ranks participants across multiple rounds.
 
 ---
 
-## Modular Architecture Overview
+## Architecture
 
-The backend has been refactored from a flat file structure into an enterprise-grade modular design enforcing clean **Separation of Concerns**:
+Backend: FastAPI + SQLAlchemy (SQLite) with Clean Architecture separation of concerns.
+Frontend: React + Vite + TypeScript.
+
+### Backend Structure
 
 ```
 backend/app/
-├── core/                       # Global system configurations & database engine
-│   ├── config.py               # Enforces environment variable precedence
-│   ├── database.py             # SQLAlchemy engine & session local providers
-│   └── security.py             # Salted password hashing & JWT token generators
-├── models/                     # SQLAlchemy declarative ORM models
-│   ├── base.py                 # Base model declarations
-│   ├── user.py                 # User domain
-│   ├── room.py                 # Rooms, RoomEvents, and RoomHistory domain
-│   ├── round.py                # Round domain
-│   └── submission.py           # Submission & Job domain
-├── schemas/                    # Pydantic data serialization schemas (DTOs)
-│   ├── user.py                 # User & Token schemas
-│   ├── room.py                 # Room, History, & invitation schemas
-│   └── battle.py               # Round, Submission, & processing Job schemas
-├── services/                   # Class-based business logic & task orchestrators
-│   ├── user_service.py         # UserService class-based CRUD
-│   ├── room_service.py         # RoomService class-based CRUD
-│   ├── round_service.py        # RoundService class-based CRUD
-│   ├── submission_service.py   # SubmissionService class-based CRUD
-│   ├── ai/                     # Modular AI service layer using Interface & Orchestrator patterns
-│   │   ├── __init__.py         # Exposes standard singleton orchestrator & custom exceptions
-│   │   ├── base.py             # BaseAIProvider interface and AIProviderError definition
-│   │   ├── groq.py             # Concrete Groq Llama-3.3 integration
-│   │   ├── openai.py           # Concrete OpenAI GPT-4o-mini integration
-│   │   ├── gemini.py           # Concrete Gemini integration
-│   │   ├── mock.py             # Procedural fallback mock generation engine
-│   │   └── orchestrator.py     # AIProviderOrchestrator managing priority-cascading and fallback
-│   └── worker.py               # In-process task queue loop and WS callbacks
-├── api/                        # HTTP endpoints & WebSocket handlers
-│   ├── auth.py                 # Register, Login, and Me endpoints
-│   ├── rooms.py                # Arena listings & details
-│   ├── history.py              # Telemetry tracking for historical stats
-│   └── websocket.py            # Connection managers and multiplayer websocket loops
-└── main.py                     # Lightweight application bootstrap entry point
+├── core/                    # Database engine & security
+├── models/                  # SQLAlchemy ORM entities
+├── schemas/                 # Pydantic DTO serialization
+├── services/                # Business logic via service classes
+│   ├── user_service.py
+│   ├── room_service.py
+│   ├── round_service.py
+│   ├── submission_service.py
+│   └── ai/                  # Modular AI provider layer
+│       ├── base.py          # BaseAIProvider interface
+│       ├── groq.py          # Groq provider
+│       ├── openai.py        # OpenAI provider
+│       ├── gemini.py        # Gemini provider
+│       ├── mock.py          # Fallback mock provider
+│       └── orchestrator.py   # Provider orchestration & fallback logic
+├── api/                     # HTTP routes & WebSocket handlers
+└── main.py                  # Application bootstrap
 ```
 
-### Class-Based Service Pattern (OOP)
-All database interactions are organized into cohesive Service classes (e.g., `UserService`, `RoomService`). These classes accept the database `Session` in their constructors (`__init__(self, db: Session)`). This decouples logic from router parameters, making database transactions highly modular and unit testing/mocking extremely straightforward.
-
-### Modular AI Service Layer (Interface & Orchestrator Design)
-To support a robust, multi-provider AI ecosystem with zero-downtime fallback capabilities, the AI service layer is designed using the **Interface** and **Orchestrator** design patterns:
-1. **Interface Contract (`BaseAIProvider`)**: Enforces a uniform, clean asynchronous contract (`generate`) that every concrete AI integration must implement. This promotes loose coupling and enforces the Single Responsibility Principle.
-2. **Concrete Providers**: Highly modular and testable classes wrapped around live AI APIs:
-   - `GroqProvider`: Uses high-speed Llama-3.3 for lightning-fast creative copywriting.
-   - `OpenAIProvider`: Employs GPT-4o-mini for stable, top-tier generation.
-   - `GeminiProvider`: Leverages the official Google Gemini APIs.
-   - `MockProvider`: Serves as a fast, offline procedural copywriting engine for sandbox mode or as a final fallback.
-3. **AI Orchestrator (`AIProviderOrchestrator`)**: Acts as the single central entry point for the background task worker. It handles pre-execution safety filters, honors the global `FORCE_MOCK_AI` toggle, and coordinates the sequential priority-cascading fallback logic across active live providers (Groq ➔ OpenAI ➔ Gemini ➔ Mock).
+**Key Design Patterns:**
+- **Service Classes**: Database logic encapsulated in service classes (`UserService`, `RoomService`, etc.) accepting `Session` in constructors for modularity and testability.
+- **AI Orchestrator**: Unified interface (`BaseAIProvider`) with priority-cascading fallback: Groq → OpenAI → Gemini → Mock provider.
 
 ---
 
-## Database Schema & Entity Model
+## Database Schema
 
-We use an **SQLite** database managed through SQLAlchemy ORM. This is the simplest database that supports transaction boundaries, relationships, and foreign keys out of the box with zero setup.
+SQLite database with SQLAlchemy ORM. Entity-Relationship diagram:
 
 ```mermaid
 erDiagram
@@ -79,144 +54,100 @@ erDiagram
     Submission ||--|| Job : tracks
 ```
 
-### Database Tables
-1. **User**: Persists credentials, custom usernames, and customizable visual profile avatar seeds.
-2. **Room**: Represents active arenas, mapping the unique 5-letter host code, active host, and arena state.
-3. **UserRoomHistory**: Tracks which rooms a user has previously visited as a host or participant.
-4. **RoomEvent**: A persistent event-source log auditing all telemetry actions for historical records.
-5. **Round**: Tracks round status, round number, and the active creative theme (e.g. *Gen-Z perfume*).
-6. **Submission**: Links the prompt input, generated creative copy, image URLs, scores, and ranks.
-7. **Job**: Manages asynchronous processing status, start timestamps, and error messages.
+**Key Tables:**
+- **User**: Credentials and profile data.
+- **Room**: Battle arena instance with host and unique invite code.
+- **Round**: Round configuration and theme for the active battle.
+- **Submission**: User prompt and generated output with scores.
+- **Job**: Async task status, timestamps, and error tracking.
+- **RoomEvent**: Event log for battle telemetry.
+- **UserRoomHistory**: Tracks participant visit history.
 
 ---
 
-## Real-time Event Model
+## Real-time Events (WebSocket)
 
-All communication in the multiplayer battle room is orchestrated in real time via **WebSockets** under `/ws/room/{room_code}`. Messages are categorized into standard event payloads:
+Communication via WebSocket at `/ws/room/{room_code}`:
 
-| Event Type | Direction | Initiator | Description |
+| Event | Direction | Trigger | Description |
 | :--- | :--- | :--- | :--- |
-| `ROOM_STATE` | Unicast (Server ➔ Client) | System | Transmits the comprehensive game, participant, and submission state upon connect/refresh. |
-| `USER_JOINED` | Broadcast (Server ➔ Room) | System | Welcomes a connecting user and refreshes the live active participant list. |
-| `USER_LEFT` | Broadcast (Server ➔ Room) | System | Triggers when a participant disconnects, cleaning up the lobby. |
-| `ROUND_STARTED` | Broadcast (Server ➔ Room) | Host | Signals that a new round is active and submissions are accepting entries. |
-| `SUBMISSION_SUBMITTED`| Broadcast (Server ➔ Room) | Participant | Signals that a prompt was submitted and an async job is queued. |
-| `JOB_STATUS_UPDATED` | Broadcast (Server ➔ Room) | Worker | Updates the status of an active job (transitions to `running` or `failed`). |
-| `SUBMISSION_COMPLETED`| Broadcast (Server ➔ Room) | Worker | Injects the generated campaign data and visual cues once the AI completes. |
-| `ROUND_EVALUATING` | Broadcast (Server ➔ Room) | Host | Locks the submission box and starts the evaluation phase. |
-| `SUBMISSION_SCORED` | Broadcast (Server ➔ Room) | Host | Synchronizes specific submission score, rank, and elimination status. |
-| `ROUND_COMPLETED` | Broadcast (Server ➔ Room) | Host | Finalizes the active round status. |
-| `BATTLE_COMPLETED` | Broadcast (Server ➔ Room) | Host | Closes the arena and announces the ultimate survivor. |
+| `ROOM_STATE` | Server → Client | Connect/Refresh | Current game state snapshot |
+| `USER_JOINED` | Server → Room | Join | User connected to room |
+| `USER_LEFT` | Server → Room | Disconnect | User left room |
+| `ROUND_STARTED` | Server → Room | Host | New round active, submissions open |
+| `SUBMISSION_SUBMITTED` | Server → Room | Participant | Prompt submitted, async job queued |
+| `JOB_STATUS_UPDATED` | Server → Room | Worker | Job status changed (running/failed) |
+| `SUBMISSION_COMPLETED` | Server → Room | Worker | AI generation complete, results ready |
+| `ROUND_EVALUATING` | Server → Room | Host | Submission phase closed |
+| `SUBMISSION_SCORED` | Server → Room | Host | Submission ranked and scored |
+| `ROUND_COMPLETED` | Server → Room | Host | Round finalized |
+| `BATTLE_COMPLETED` | Server → Room | Host | Battle concluded |
 
 ---
 
-## Generation Job Lifecycle
+## Job Lifecycle
 
-To prevent blocking the HTTP request handler, prompt execution is offloaded to a background queue. The job flows through the following state machine:
+Async task submission flows through:
 
 ```mermaid
 stateDiagram-v2
-    [*] --> queued: Job created & queued
-    queued --> running: Worker pulls from queue
-    running --> completed: AI generated successfully
-    running --> failed: API error / safety filter
-    running --> timed_out: API takes > 30 seconds
+    [*] --> queued: Job created
+    queued --> running: Worker processes
+    running --> completed: AI success
+    running --> failed: Error/timeout
     completed --> [*]
     failed --> [*]
-    timed_out --> [*]
 ```
 
-*   **`queued`**: Prompt is persisted, and the job is inserted into `asyncio.Queue()`.
-*   **`running`**: Background loop picks up the task, updates database state, and triggers AI APIs.
-*   **`completed`**: Copy writing completes. The payload is JSON-parsed, saved to the database, and sent to all clients.
-*   **`failed`**: The worker catches errors (e.g. prompt injection, api keys missing, safety filter block) and saves the error reason for the UI.
-*   **`timed_out`**: The task is cancelled after 30.0 seconds of unresponsiveness to prevent locking the queue thread.
+- **queued**: Prompt persisted to database, added to processing queue.
+- **running**: Worker begins AI generation.
+- **completed**: Result stored and broadcast to clients.
+- **failed**: Error logged (30s timeout, API error, safety filter).
 
 ---
 
-## Chosen Judging / Scoring Mechanism
+## Persistence Model
 
-### The Selected Design: Host-Led Qualitative Grading
-In this implementation, the host serves as the ultimate creative judge. The host reviews campaigns, assigns numeric scores (0 to 100), gives direct ranking positions, and marks individuals as either `active` or `eliminated`.
+**Persisted (Database):**
+- User credentials, rooms, rounds, submissions, AI-generated content, job status, event logs.
 
-*   **Why this was chosen**: Standard multiplayer game loops (like Jackbox Games, Quiplash, or Cards Against Humanity) thrive on peer or host judgment. It introduces human humor, subjective critiques, and social dynamics.
-*   **Weaknesses**:
-    1. It relies heavily on host availability. If the host becomes inactive, the room blocks.
-    2. Host bias or lack of objective metrics can frustrate users.
-*   **Production Improvements**:
-    1. **Consensus Voting**: Allow all participants to upvote submissions, determining rank collectively.
-    2. **AI Judge (Automated Consensus)**: Integrate an LLM judge utilizing a secondary agent prompt to rank inputs objectively against custom metrics (e.g. *Gen-Z vibe check*, *clarity of visual metaphor*).
+**In-Memory Only:**
+- Active WebSocket connections (lost on server restart).
+- Queued jobs (incomplete jobs reset, but can be rerun from saved state).
 
 ---
 
-## What is Persisted and What is Not
+## Error Handling
 
-### Persisted (SQLite Database)
-- **Users**: User credentials, salt, hashed passwords, avatar seeds.
-- **Rooms & History**: Room names, unique invite codes, host linkages, and participant visit trails.
-- **Rounds**: Round configurations, statuses, active themes, and order sequences.
-- **Submissions & Async Jobs**: Participant prompts, generated campaign JSON strings, image visual strings, grades, and background task telemetry.
-- **Activity Log**: Event-sourced logs inside `RoomEvent` to capture chronological battle events.
-
-### Not Persisted (In-Memory Only)
-- **Active WebSocket Sockets**: Maintained dynamically inside the `ConnectionManager` class in memory.
-- **In-process Queue Tasks**: The background queue list `asyncio.Queue()` is managed in-memory. If the server is restarted, any currently *queued* jobs are reset (but they can be rerun since the database maintains their draft state).
+- **AI Failures**: Automatic fallback cascade through active providers (Groq → OpenAI → Gemini → Mock). If all fail or `FORCE_MOCK_AI=true`, mock provider generates output.
+- **Safety Filters**: Blocked prompts marked as failed with user-readable error.
+- **Timeouts**: 30-second hard limit per task; exceeded tasks transition to `timed_out`.
+- **WebSocket Recovery**: Frontend auto-reconnects and requests full state snapshot on disconnect.
 
 ---
 
-## Failure Handling Strategy
+## Local Development
 
-1. **AI Failures & Fallbacks**: The refactored AI Service Layer encapsulates multiple concrete LLM providers behind a unified `BaseAIProvider` interface. The `AIProviderOrchestrator` runs a structured sequential cascade over these live providers (Groq ➔ OpenAI ➔ Gemini). If a provider's key is missing, or it is rate-limited, or encounters a API/network exception, the orchestrator automatically catches the failure, logs it, and falls back to the next active provider in the cascade. If all configured live providers fail or if `FORCE_MOCK_AI` is enabled, it triggers the procedural `MockProvider` backup so that the creative copywriting and battle room gameplay remain completely uninterrupted.
-2. **Safety Filter Violation**: If a user tries to trigger system failures (e.g. prompt beginning with `"fail"`), the backend intercepts the request and marks the job as `failed` with a readable safety warning on the frontend card.
-3. **Task Timeouts**: Integrated `asyncio.wait_for` set to a hard limit of 30.0 seconds. If an LLM endpoint takes too long, the thread is closed, and the job transitions to `timed_out`.
-4. **WebSocket Recovery**: The React frontend uses an automated network drop listener and custom reconnect retry hooks to re-establish sockets, querying the server for a full `ROOM_STATE` snapshot instantly to resume without losing battle context.
+**Prerequisites:** Python 3.12+, Node.js 18+
 
----
-
-## Step-by-Step Local Deployment Guide
-
-### Prerequisites
-*   Python 3.12+
-*   Node.js 18+ & npm
-
-### 1. Setup Backend Environment
+**Backend:**
 ```powershell
-# Navigate to backend directory
 cd backend
-
-# Create and activate virtual environment
 python -m venv venv
 .\venv\Scripts\Activate.ps1
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Create your local .env configuration (or copy .env.example)
-# Add your live Groq or OpenAI API key to experience real campaign generations!
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 2. Start Backend Server
+**Frontend:**
 ```powershell
-venv\Scripts\python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-### 3. Setup Frontend Environment
-```powershell
-# Navigate to frontend directory
-cd ../frontend
-
-# Install dependencies
+cd frontend
 npm install
-
-# Start development server
 npm run dev -- --host 0.0.0.0
 ```
-Open **[http://localhost:5173](http://localhost:5173)** in your browser!
+Open [http://localhost:5173](http://localhost:5173)
 
----
-
-## Running the Test Suite
-We have provided an automated, end-to-end integration test suite that tests database connections, auth tokens, background worker loops, and websocket state dispatcher loops.
+**Tests:**
 ```powershell
 cd backend
 .\venv\Scripts\Activate.ps1
@@ -225,57 +156,17 @@ pytest test_battle.py -v
 
 ---
 
-## Cloud Deployment and Hosting Guide
+## Deployment
 
-Since the application features a decoupled architecture (FastAPI backend + React frontend), hosting is split into two parts:
+**Backend (FastAPI + SQLite):**
+- Services with persistent storage: **Railway**
+- Requires persistent volume for `arena_battle.db`
+- Set environment variables: `DATABASE_URL`, `GROQ_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `JWT_SECRET`, `FORCE_MOCK_AI`
+- Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 
-### 1. Hosting the Backend (FastAPI + WebSockets)
-To host the stateful WebSocket backend and persist the SQLite database, you should choose a hosting service that supports persistent block volumes and stateful container environments:
+**Frontend (React + Vite):**
+- Static hosting: **Vercel**
+- Build: `npm run build` → output to `dist/`
+- Optional: Set `VITE_API_URL` and `VITE_WS_URL` for backend connection
 
-*   **Recommended Services**: **Railway**, **Render** (Web Service), or **Fly.io**.
-*   **Step-by-Step with Railway**:
-    1. Click **New Project** and connect your GitHub repository.
-    2. Choose the `backend` subdirectory.
-    3. Setup a **Persistent Volume** (e.g., Mount Path `/app/data/`) so that the `poiro_battle.db` SQLite file is not wiped on restarts.
-    4. Configure your environment variables in the variables tab:
-       *   `DATABASE_URL=sqlite:////app/data/poiro_battle.db`
-       *   `FORCE_MOCK_AI=false`
-       *   `GROQ_API_KEY=gsk_...`
-       *   `OPENAI_API_KEY=sk-proj-...`
-       *   `GEMINI_API_KEY=AIzaSy...`
-       *   `JWT_SECRET=your_production_secret`
-    5. Set the Start Command to: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
-
-*   **Step-by-Step with Fly.io (SQLite Persistence via Volumes)**:
-    1. Initialize the Fly application inside your terminal: `fly launch`.
-    2. Since Fly.io filesystems are ephemeral, **create a persistent 1GB block storage volume** in your target deployment region:
-       ```bash
-       fly volumes create poiro_data --size 1 --region <your-deployment-region>
-       ```
-    3. Open your generated `fly.toml` file and append the `[mounts]` block to mount the volume to a specific container folder (e.g. `/data`):
-       ```toml
-       [[mounts]]
-         source = "poiro_data"
-         destination = "/data"
-       ```
-    4. Set your production environment variables (e.g. via `fly secrets set` or the online dashboard), pointing the database location directly into the persistent mount directory:
-       *   `DATABASE_URL=sqlite:////data/poiro_battle.db`
-       *   `FORCE_MOCK_AI=false`
-       *   `GROQ_API_KEY=gsk_...`
-       *   `OPENAI_API_KEY=sk-proj-...`
-       *   `GEMINI_API_KEY=AIzaSy...`
-       *   `JWT_SECRET=your_production_secret`
-    5. Deploy the application: `fly deploy`. The SQLite database is now safely written to persistent storage, surviving all container restarts and updates.
-
----
-
-### 2. Hosting the Frontend (React + Vite + TypeScript)
-The frontend builds into a highly optimized bundle of static HTML/JS/CSS assets which can be hosted at near-zero cost:
-
-*   **Recommended Services**: **Vercel**, **Netlify**, or **Render** (Static Site).
-*   **Step-by-Step with Vercel**:
-    1. Select **Import Project** and link your repository.
-    2. Choose the `frontend` folder as the root.
-    3. Set the **Build Command** to: `npm run build` and **Output Directory** to `dist`.
-    4. Add environmental overrides if needed (e.g., configuring `VITE_API_URL` and `VITE_WS_URL` to point to your live hosted Railway backend URL instead of `localhost:8000`).
 

@@ -52,4 +52,4 @@ app.include_router(api_router)
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to the Poiro Creative Battle Room API server."}
+    return {"message": "Welcome to the Prompt Arena API server."}

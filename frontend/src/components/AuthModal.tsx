@@ -40,7 +40,7 @@ export const AuthModal: React.FC = () => {
           <Cpu className="w-8 h-8 animate-pulse" />
         </div>
         <h2 className="text-2xl font-bold tracking-tight text-white bg-clip-text">
-          POIRO BATTLE ARENA
+          PROMPT ARENA
         </h2>
         <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider">
           AI Creative Multiplex Room

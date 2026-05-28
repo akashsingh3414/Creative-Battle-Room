@@ -58,7 +58,7 @@ interface BattleStore {
   token: string | null;
   authLoading: boolean;
   authError: string | null;
-  
+
   // Real-time Room State
   room: RoomState;
   ws: WebSocket | null;
@@ -81,7 +81,7 @@ interface BattleStore {
   getRoomDetails: (room_id: string) => Promise<boolean>;
   fetchPublicRooms: () => Promise<void>;
   fetchUserHistory: () => Promise<void>;
-  
+
   // WebSocket Live Actions
   connectRoom: (room_code: string) => void;
   disconnectRoom: () => void;
@@ -134,10 +134,10 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Login failed');
-      
-      localStorage.setItem('poiro_token', data.access_token);
-      localStorage.setItem('poiro_user', JSON.stringify(data.user));
-      
+
+      localStorage.setItem('arena_token', data.access_token);
+      localStorage.setItem('arena_user', JSON.stringify(data.user));
+
       set({ token: data.access_token, user: data.user, authLoading: false });
       get().setToast(`Logged in successfully! Welcome back, ${data.user.username}.`, 'success');
       return true;
@@ -159,8 +159,8 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Registration failed');
 
-      localStorage.setItem('poiro_token', data.access_token);
-      localStorage.setItem('poiro_user', JSON.stringify(data.user));
+      localStorage.setItem('arena_token', data.access_token);
+      localStorage.setItem('arena_user', JSON.stringify(data.user));
 
       set({ token: data.access_token, user: data.user, authLoading: false });
       get().setToast(`Account created! Welcome, ${data.user.username}.`, 'success');
@@ -174,8 +174,8 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
 
   logout: () => {
     get().disconnectRoom();
-    localStorage.removeItem('poiro_token');
-    localStorage.removeItem('poiro_user');
+    localStorage.removeItem('arena_token');
+    localStorage.removeItem('arena_user');
     set({
       user: null,
       token: null,
@@ -193,15 +193,15 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
   },
 
   initAuth: async () => {
-    const token = localStorage.getItem('poiro_token');
-    const localUser = localStorage.getItem('poiro_user');
+    const token = localStorage.getItem('arena_token');
+    const localUser = localStorage.getItem('arena_user');
     if (!token || !localUser) return;
 
     try {
       set({ token, user: JSON.parse(localUser) });
-      
+
       // Auto-reconnect active room from previous session if it exists!
-      const activeRoomCode = localStorage.getItem('poiro_active_room_code');
+      const activeRoomCode = localStorage.getItem('arena_active_room_code');
       if (activeRoomCode) {
         get().connectRoom(activeRoomCode);
       }
@@ -215,7 +215,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
         get().logout();
       } else {
         const validatedUser = await res.json();
-        localStorage.setItem('poiro_user', JSON.stringify(validatedUser));
+        localStorage.setItem('arena_user', JSON.stringify(validatedUser));
         set({ user: validatedUser });
       }
     } catch (e) {
@@ -330,9 +330,9 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
               users: payload.users || []
             }
           });
-          
+
           // Save active room memory for instant auto-recovery on page refresh
-          localStorage.setItem('poiro_active_room_code', payload.room_id);
+          localStorage.setItem('arena_active_room_code', payload.room_id);
 
           // Update user history from database to refresh homepage lists dynamically
           get().fetchUserHistory();
@@ -386,8 +386,8 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
             if (!state.room.active_round) return {};
             // Prevent duplicate submissions
             const exists = state.room.active_round.submissions.some(s => s.id === payload.id);
-            const subs = exists 
-              ? state.room.active_round.submissions 
+            const subs = exists
+              ? state.room.active_round.submissions
               : [...state.room.active_round.submissions, payload];
             return {
               room: {
@@ -543,7 +543,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
             }
           }));
           get().setToast('The Creative Battle Room session has finished! Long live the champions!', 'success');
-          
+
           // Update user history from database so that the room status is updated dynamically
           get().fetchUserHistory();
           break;
@@ -573,7 +573,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
       set({ ws: null, wsConnected: false });
     }
     // Clear active room memory upon manual disconnect so it doesn't auto-reconnect
-    localStorage.removeItem('poiro_active_room_code');
+    localStorage.removeItem('arena_active_room_code');
     // Force reset room state to dashboard view
     set({
       room: {

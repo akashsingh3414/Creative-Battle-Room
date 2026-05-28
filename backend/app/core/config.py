@@ -15,8 +15,8 @@ if os.path.exists(env_path):
                     os.environ[key_clean] = val.strip().strip('"').strip("'")
 
 class Settings:
-    PROJECT_NAME: str = "Poiro AI Creative Battle Room"
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./poiro_battle.db")
+    PROJECT_NAME: str = "Prompt Arena"
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./arena_battle.db")
     
     # Security
     JWT_SECRET: str = os.getenv("JWT_SECRET", "super_secret_cyberpunk_campaign_key_31337_!")

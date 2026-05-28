@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # Setup test environment before imports
-os.environ["DATABASE_URL"] = "sqlite:///./test_poiro_battle.db"
+os.environ["DATABASE_URL"] = "sqlite:///./test_arena_battle.db"
 os.environ["FORCE_MOCK_AI"] = "true"
 
 from app.core.database import Base, get_db
@@ -74,7 +74,7 @@ async def mock_queue_put(item):
 app.services.worker.generation_queue.put = mock_queue_put
 
 # Use a clean test database
-TEST_DB_URL = "sqlite:///./test_poiro_battle.db"
+TEST_DB_URL = "sqlite:///./test_arena_battle.db"
 engine = create_engine(TEST_DB_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -101,7 +101,7 @@ def test_battle_room_lifecycle():
     # 1. Register Host and Participant
     host_resp = client.post("/api/auth/register", json={
         "username": "NeonHost",
-        "email": "host@poiro.ai",
+        "email": "host@arena.ai",
         "password": "securepassword123",
         "avatar_seed": "host_seed"
     })
@@ -113,7 +113,7 @@ def test_battle_room_lifecycle():
 
     part_resp = client.post("/api/auth/register", json={
         "username": "CyberRunner",
-        "email": "runner@poiro.ai",
+        "email": "runner@arena.ai",
         "password": "runnerpassword123",
         "avatar_seed": "runner_seed"
     })
@@ -271,8 +271,8 @@ def test_battle_room_lifecycle():
 if __name__ == "__main__":
     test_battle_room_lifecycle()
     # Clean up test database
-    if os.path.exists("./test_poiro_battle.db"):
+    if os.path.exists("./test_arena_battle.db"):
         try:
-            os.remove("./test_poiro_battle.db")
+            os.remove("./test_arena_battle.db")
         except Exception:
             pass
